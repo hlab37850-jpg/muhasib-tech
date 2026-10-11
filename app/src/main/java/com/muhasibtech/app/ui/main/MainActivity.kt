@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.muhasibtech.app.MuhasibApp
 import com.muhasibtech.app.R
 import com.muhasibtech.app.data.model.DocType
+import com.muhasibtech.app.data.local.entity.WarehouseEntity
 import com.muhasibtech.app.data.repository.AppRepository
 import com.muhasibtech.app.databinding.ActivityMainBinding
 import com.muhasibtech.app.ui.document.DocumentListActivity
@@ -240,13 +241,8 @@ class MainActivity : AppCompatActivity() {
             val names = warehouses.map { it.name }.toTypedArray()
             val currentId = repo.settings.getCurrentWarehouseId()
             
-            var selectedIndex = 0
-            for (i in warehouses.indices) {
-                if (warehouses[i].id == currentId) {
-                    selectedIndex = i
-                    break
-                }
-            }
+            var selectedIndex = warehouses.indexOfFirst { w: WarehouseEntity -> w.id == currentId }
+            if (selectedIndex < 0) selectedIndex = 0
 
             com.google.android.material.dialog.MaterialAlertDialogBuilder(this@MainActivity)
                 .setTitle(R.string.warehouse)
