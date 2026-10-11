@@ -210,8 +210,8 @@ class MainActivity : AppCompatActivity() {
             var currentId = repo.settings.getCurrentWarehouseId()
 
             if (currentId == 0L) {
-                val defaultWarehouse = repo.warehouses.getDefault()
-                    ?: repo.warehouses.observeActive().firstOrNull()
+                val activeList = repo.warehouses.observeActive().first()
+                val defaultWarehouse = repo.warehouses.getDefault() ?: activeList.firstOrNull()
 
                 if (defaultWarehouse != null) {
                     currentId = defaultWarehouse.id
