@@ -238,11 +238,16 @@ class MainActivity : AppCompatActivity() {
                 return@launch
             }
 
-            val names = warehouses.map { it.name }.toTypedArray()
+            val names = Array(warehouses.size) { i -> warehouses[i].name }
             val currentId = repo.settings.getCurrentWarehouseId()
             
-            var selectedIndex = warehouses.indexOfFirst { w: WarehouseEntity -> w.id == currentId }
-            if (selectedIndex < 0) selectedIndex = 0
+            var selectedIndex = 0
+            for (i in 0 until warehouses.size) {
+                if (warehouses[i].id == currentId) {
+                    selectedIndex = i
+                    break
+                }
+            }
 
             com.google.android.material.dialog.MaterialAlertDialogBuilder(this@MainActivity)
                 .setTitle(R.string.warehouse)
