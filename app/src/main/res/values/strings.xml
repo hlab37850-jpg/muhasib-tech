@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">المحاسب تك</string>
+
+    <string name="sales">المبيعات</string>
+    <string name="purchases">المشتريات</string>
+    <string name="receipt_payment">قبض/صرف</string>
+    <string name="accounts">الحسابات</string>
+
+    <string name="section_stock_ops">عمليات مخزنية</string>
+    <string name="section_accounts">قيود وحسابات</string>
+    <string name="section_items">أصناف</string>
+    <string name="section_currencies">العملات</string>
+    <string name="section_reports">التقارير</string>
+
+    <string name="child_stock_out">صرف مخزني</string>
+    <string name="child_stock_in">توريد مخزني</string>
+    <string name="child_stock_transfer">تحويل مخزني</string>
+    <string name="child_stock_adjustment">تسوية مخزنية</string>
+    <string name="child_add_warehouse">إضافة مخزن</string>
+    <string name="child_stocktake">جرد مخزني</string>
+
+    <string name="child_journal_daily">قيد يومي</string>
+    <string name="child_journal_opening">قيد افتتاحي</string>
+    <string name="child_add_account">إضافة حساب</string>
+    <string name="child_cashbox_statement">حركة الصندوق</string>
+    <string name="child_chart_accounts">دليل الحسابات</string>
+    <string name="child_yearly_close">إقفال سنوي</string>
+
+    <string name="child_items">الأصناف</string>
+    <string name="child_sale_prices">أسعار البيع</string>
+    <string name="child_item_units">وحدات الصنف</string>
+    <string name="child_quotation">فاتورة عرض أسعار</string>
+    <string name="child_purchase_request">طلب شراء</string>
+
+    <string name="child_currencies">العملات</string>
+    <string name="child_exchange_rates">أسعار العملات</string>
+    <string name="child_account_limits">سقف الحسابات</string>
+
+    <string name="child_item_movement">حركة الأصناف</string>
+    <string name="child_remaining_stock">المخزون المتبقي</string>
+    <string name="child_account_balances">أرصدة الحسابات</string>
+    <string name="child_trial_balance">ميزان المراجعة</string>
+    <string name="child_income">قائمة الدخل</string>
+    <string name="child_financial_position">المركز المالي</string>
+    <string name="child_other_reports">تقارير أخرى</string>
+
+    <string name="warehouse">المخزن</string>
+    <string name="switch_warehouse">تبديل</string>
+
+    <string name="save">حفظ</string>
+    <string name="cancel">إلغاء</string>
+    <string name="delete">حذف</string>
+    <string name="edit">تعديل</string>
+    <string name="add">إضافة</string>
+    <string name="name">الاسم</string>
+    <string name="code">الرمز</string>
+
+    <string name="confirm_delete">هل تريد الحذف؟</string>
+    <string name="no_results">لا توجد نتائج...</string>
+    <string name="field_required">هذا الحقل مطلوب</string>
+
+    <string name="notifications">التنبيهات</string>
+    <string name="share">مشاركة</string>
+
+    <string name="title_accounts">دليل الحسابات</string>
+    <string name="title_categories">التصنيفات</string>
+    <string name="title_currencies">العملات</string>
+    <string name="title_exchange_rates">أسعار العملات</string>
+    <string name="title_warehouses">المخازن</string>
+    <string name="title_cashboxes">الصناديق</string>
+    <string name="title_account_limits">سقف الحسابات</string>
+    <string name="title_users">المستخدمون</string>
+    <string name="title_alerts">التنبيهات</string>
+    <string name="title_yearly_closings">الإقفال السنوي</string>
+    <string name="title_item_groups">مجموعات الأصناف</string>
+    <string name="title_units">وحدات القياس</string>
+    <string name="title_items">الأصناف</string>
+    <string name="title_item_units">وحدات الصنف</string>
+    <string name="title_item_prices">أسعار الأصناف</string>
+    <string name="title_stock_balances">أرصدة المخزون</string>
+    <string name="title_journal_lines">القيود اليومية</string>
+
+    <string name="date">التاريخ</string>
+    <string name="reference">مرجع</string>
+    <string name="notes">ملاحظات</string>
+    <string name="party">الطرف</string>
+    <string name="cashbox">الصندوق</string>
+    <string name="currency">العملة</string>
+    <string name="target_warehouse">المخزن الهدف</string>
+    <string name="settlement_type">نوع التسوية</string>
+
+    <string name="qty">الكمية</string>
+    <string name="price">السعر</string>
+    <string name="total">الإجمالي</string>
+    <string name="amount">المبلغ</string>
+    <string name="debit">مدين</string>
+    <string name="credit">دائن</string>
+
+    <string name="select_item">اختيار الصنف</string>
+    <string name="select_account">اختيار الحساب</string>
+    <string name="select_warehouse">اختيار المخزن</string>
+    <string name="select_target_warehouse">اختيار المخزن الهدف</string>
+    <string name="select_cashbox">اختيار الصندوق</string>
+    <string name="select_currency">اختيار العملة</string>
+    <string name="select_party">اختيار الطرف</string>
+
+    <string name="none">بدون</string>
+
+    <string name="opening">افتتاحي</string>
+    <string name="damaged">تالف</string>
+    <string name="increase">زيادة</string>
+    <string name="shortage">عجز</string>
+
+    <string name="discount">الخصم</string>
+    <string name="discount_amount">مبلغ</string>
+    <string name="discount_percent">نسبة</string>
+    <string name="tax_rate">الضريبة %</string>
+    <string name="fees">رسوم أخرى</string>
+    <string name="fees_note">بيان الرسوم</string>
+    <string name="paid_amount">المبلغ المدفوع</string>
+
+    <string name="add_line">إضافة بند</string>
+    <string name="summary">المخلص</string>
+
+    <string name="saved_success">تم الحفظ بنجاح</string>
+    <string name="save_failed">فشل الحفظ</string>
+</resources>

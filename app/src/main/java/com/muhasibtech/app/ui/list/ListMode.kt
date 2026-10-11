@@ -1,0 +1,21 @@
+package com.muhasibtech.app.ui.list
+
+enum class ListMode {
+    ACCOUNTS,
+    CATEGORIES,
+    CURRENCIES,
+    EXCHANGE_RATES,
+    WAREHOUSES,
+    CASHBOXES,
+    ACCOUNT_LIMITS,
+    USERS,
+    ALERTS,
+    YEARLY_CLOSINGS,
+    ITEM_GROUPS,
+    UNITS,
+    ITEMS,
+    ITEM_UNITS,
+    ITEM_PRICES,
+    STOCK_BALANCES,
+    JOURNAL_LINES
+}
