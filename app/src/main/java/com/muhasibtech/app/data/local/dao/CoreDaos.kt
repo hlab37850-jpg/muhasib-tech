@@ -153,6 +153,9 @@ interface CashboxDao {
 
     @Query("SELECT * FROM cashboxes WHERE accountId = :accountId LIMIT 1")
     suspend fun getByAccountId(accountId: Long): CashboxEntity?
+
+    @Query("SELECT * FROM cashboxes WHERE isDefault = 1 LIMIT 1")
+    suspend fun getDefault(): CashboxEntity?
 }
 
 @Dao
