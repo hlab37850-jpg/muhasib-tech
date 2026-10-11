@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <AutoCompleteTextView
+            android:id="@+id/dlgItemName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/col_item"
+            android:completionThreshold="1"
+            android:inputType="text" />
+
+        <ImageButton
+            android:id="@+id/btnInfo"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_info"
+            android:tint="@color/colorPrimary"
+            android:background="?attr/selectableItemBackground"
+            android:contentDescription="@string/item_data" />
+
+        <ImageButton
+            android:id="@+id/btnCloseTop"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_close"
+            android:tint="@color/textSecondary"
+            android:background="?attr/selectableItemBackground"
+            android:contentDescription="@string/close" />
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/dlgQty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/qty"
+        android:inputType="numberDecimal" />
+
+    <EditText
+        android:id="@+id/dlgPrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/price"
+        android:inputType="numberDecimal" />
+
+    <EditText
+        android:id="@+id/dlgTotal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/or_total"
+        android:inputType="numberDecimal" />
+
+    <Button
+        android:id="@+id/btnMoreDetails"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/other_details" />
+
+    <EditText
+        android:id="@+id/dlgNotes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/notes"
+        android:visibility="gone"
+        android:inputType="text" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <Button
+            android:id="@+id/btnAddLineDlg"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/add" />
+
+        <Button
+            android:id="@+id/btnCancelDlg"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/cancel" />
+
+        <Button
+            android:id="@+id/btnCloseDlg"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/close" />
+    </LinearLayout>
+</LinearLayout>

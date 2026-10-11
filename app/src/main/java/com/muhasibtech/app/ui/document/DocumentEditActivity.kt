@@ -4,14 +4,16 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.RadioButton
-import android.widget.RadioGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.muhasibtech.app.MuhasibApp
 import com.muhasibtech.app.R
@@ -20,16 +22,22 @@ import com.muhasibtech.app.data.local.entity.CashboxEntity
 import com.muhasibtech.app.data.local.entity.CurrencyEntity
 import com.muhasibtech.app.data.local.entity.ItemEntity
 import com.muhasibtech.app.data.local.entity.WarehouseEntity
+import com.muhasibtech.app.data.model.AccountNature
 import com.muhasibtech.app.data.model.AdjustmentType
 import com.muhasibtech.app.data.model.DocType
 import com.muhasibtech.app.data.model.DiscountType
 import com.muhasibtech.app.data.model.DocumentRequest
 import com.muhasibtech.app.data.repository.AppRepository
 import com.muhasibtech.app.databinding.ActivityDocumentEditBinding
+import com.muhasibtech.app.ui.list.ListMode
+import com.muhasibtech.app.ui.list.SimpleListActivity
 import com.muhasibtech.app.util.AppDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
 class DocumentEditActivity : AppCompatActivity() {
 
@@ -54,12 +62,11 @@ class DocumentEditActivity : AppCompatActivity() {
     private lateinit var repo: AppRepository
     private lateinit var lineAdapter: DocumentLineAdapter
 
-    private var docType: String = DocType.JOURNAL_DAILY
+    private var docType: String = DocType.SALE_CASH
     private var documentId: Long = 0
 
     private var partyAccountId: Long = 0
     private var warehouseId: Long = 0
-    private var targetWarehouseId: Long = 0
     private var currencyId: Long = 0
     private var cashboxId: Long = 0
 
@@ -78,7 +85,13 @@ class DocumentEditActivity : AppCompatActivity() {
     private var currencies: List<CurrencyEntity> = emptyList()
     private var cashboxes: List<CashboxEntity> = emptyList()
     private var accounts: List<AccountEntity> = emptyList()
-    private var items: List<ItemEntity> = emptyList()
+    private var items: MutableList<ItemEntity> = mutableListOf()
+
+    private val partyNames = mutableListOf<String>()
+    private val itemNames = mutableListOf<String>()
+
+    private lateinit var partyAdapter: ArrayAdapter<String>
+    private lateinit var itemAdapter: ArrayAdapter<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,42 +101,82 @@ class DocumentEditActivity : AppCompatActivity() {
 
         repo = (application as MuhasibApp).repository
 
-        docType = intent.getStringExtra(EXTRA_DOC_TYPE) ?: DocType.JOURNAL_DAILY
+        docType = intent.getStringExtra(EXTRA_DOC_TYPE) ?: DocType.SALE_CASH
         documentId = intent.getLongExtra(EXTRA_DOCUMENT_ID, 0)
 
-        binding.toolbar.title = getTitleForDocType(docType)
-
         binding.toolbar.setOnMenuItemClickListener { item ->
-            if (item.itemId == R.id.action_save) {
-                saveDocument()
-                true
+            when (item.itemId) {
+                R.id.action_save -> { saveDocument(); true }
+                R.id.action_new -> { resetForm(); true }
+                R.id.action_delete -> { deleteCurrent(); true }
+                R.id.action_share -> { shareDocument(); true }
+                else -> false
+            }
+        }
+
+        partyAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, partyNames)
+        itemAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, itemNames)
+
+        binding.etParty.setAdapter(partyAdapter)
+        binding.etItemSearch.setAdapter(itemAdapter)
+
+        binding.etParty.setOnItemClickListener { _, _, position, _ ->
+            partyAccountId = accounts[position].id
+        }
+
+        binding.etItemSearch.setOnItemClickListener { _, _, position, _ ->
+            openItemDialog(items[position], null)
+            binding.etItemSearch.setText("")
+        }
+
+        binding.btnAddItem.setOnClickListener {
+            if (isAccountDocument()) {
+                openAccountLineDialog(null)
             } else {
-                false
+                openItemDialog(null, null)
             }
         }
 
-        binding.btnAddLine.setOnClickListener {
-            addLine()
+        binding.btnClearItem.setOnClickListener {
+            binding.etItemSearch.setText("")
         }
 
-        binding.tvSummary.setOnClickListener {
-            if (isDiscountSupported()) {
-                showDiscountDialog()
+        binding.etDate.setOnClickListener { openDatePicker() }
+        binding.btnCalendar.setOnClickListener { openDatePicker() }
+
+        binding.layoutSummary.setOnClickListener {
+            if (isDiscountSupported()) showDiscountDialog()
+        }
+
+        binding.switchCredit.setOnCheckedChangeListener { _, checked ->
+            docType = when {
+                isSaleFamily() -> if (checked) DocType.SALE_CREDIT else DocType.SALE_CASH
+                isPurchaseFamily() -> if (checked) DocType.PURCHASE_CREDIT else DocType.PURCHASE_CASH
+                else -> docType
             }
+            updateHeaderVisibility()
+            updateTitle()
+            if (documentId == 0L) updateNumberPreview()
         }
 
-        setupSelectors()
+        binding.cbReference.setOnCheckedChangeListener { _, _ -> updateTitle() }
+
         loadMasterData()
     }
 
-    private fun setupSelectors() {
-        binding.btnParty.setOnClickListener { showPartyDialog() }
-        binding.btnWarehouse.setOnClickListener { showWarehouseDialog() }
-        binding.btnTargetWarehouse.setOnClickListener { showTargetWarehouseDialog() }
-        binding.btnCashbox.setOnClickListener { showCashboxDialog() }
-        binding.btnCurrency.setOnClickListener { showCurrencyDialog() }
-        binding.btnSettlement.setOnClickListener { showSettlementDialog() }
-    }
+    private fun isSaleFamily(): Boolean =
+        docType == DocType.SALE_CASH || docType == DocType.SALE_CREDIT
+
+    private fun isPurchaseFamily(): Boolean =
+        docType == DocType.PURCHASE_CASH || docType == DocType.PURCHASE_CREDIT
+
+    private fun isAccountDocument(): Boolean =
+        docType == DocType.RECEIPT ||
+            docType == DocType.PAYMENT ||
+            docType == DocType.JOURNAL_DAILY ||
+            docType == DocType.JOURNAL_OPENING
+
+    private fun isDiscountSupported(): Boolean = isSaleFamily() || isPurchaseFamily()
 
     private fun loadMasterData() {
         lifecycleScope.launch {
@@ -131,7 +184,15 @@ class DocumentEditActivity : AppCompatActivity() {
             currencies = repo.currencies.observeActive().first()
             cashboxes = repo.cashboxes.observeActive().first()
             accounts = repo.accounts.observeActive().first()
-            items = repo.items.observeActive().first()
+            items = repo.items.observeActive().first().toMutableList()
+
+            partyNames.clear()
+            partyNames.addAll(accounts.map { it.name })
+            partyAdapter.notifyDataSetChanged()
+
+            itemNames.clear()
+            itemNames.addAll(items.map { it.name })
+            itemAdapter.notifyDataSetChanged()
 
             if (documentId > 0) {
                 val loaded = loadDocument()
@@ -140,10 +201,12 @@ class DocumentEditActivity : AppCompatActivity() {
                 initDefaults()
             }
 
+            setupSpinners()
             setupLinesAdapter()
-            updateVisibility()
-            updateSelectors()
-            updateTotals()
+            updateHeaderVisibility()
+            updateTitle()
+            updateNumberPreview()
+            updateSummary()
         }
     }
 
@@ -151,7 +214,6 @@ class DocumentEditActivity : AppCompatActivity() {
         warehouseId = repo.settings.getCurrentWarehouseId()
         currencyId = repo.settings.getCurrentCurrencyId()
         cashboxId = repo.cashboxes.getDefault()?.id ?: 0
-
         binding.etDate.setText(AppDate.today())
     }
 
@@ -159,11 +221,8 @@ class DocumentEditActivity : AppCompatActivity() {
         val doc = repo.documents.getById(documentId) ?: return false
 
         docType = doc.docType
-        binding.toolbar.title = getTitleForDocType(docType)
-
         partyAccountId = doc.partyAccountId
         warehouseId = doc.warehouseId
-        targetWarehouseId = doc.targetWarehouseId
         currencyId = doc.currencyId
         cashboxId = doc.cashboxId
         settlementType = if (doc.settlementType.isBlank()) AdjustmentType.OPENING else doc.settlementType
@@ -176,31 +235,34 @@ class DocumentEditActivity : AppCompatActivity() {
         paidAmount = doc.paidAmount
 
         binding.etDate.setText(doc.date)
-        binding.etReference.setText(doc.reference)
         binding.etNotes.setText(doc.notes)
+        binding.cbReference.isChecked = doc.reference.isNotBlank()
+        binding.etParty.setText(
+            if (doc.partyAccountId == 0L) "" else (accounts.firstOrNull { it.id == doc.partyAccountId }?.name ?: "")
+        )
+
+        binding.switchCredit.isChecked =
+            docType == DocType.SALE_CREDIT || docType == DocType.PURCHASE_CREDIT
 
         val docLines = repo.documentLines.getByDocument(documentId)
-
         lines.clear()
 
         docLines.forEach { line ->
             if (isAccountDocument()) {
-                val accountName = accounts.firstOrNull { it.id == line.accountId }?.name ?: ""
                 lines.add(
                     LineUi(
                         accountId = line.accountId,
-                        accountName = accountName,
+                        accountName = accounts.firstOrNull { it.id == line.accountId }?.name ?: "",
                         debit = line.debit,
                         credit = line.credit,
                         notes = line.notes
                     )
                 )
             } else {
-                val itemName = items.firstOrNull { it.id == line.itemId }?.name ?: ""
                 lines.add(
                     LineUi(
                         itemId = line.itemId,
-                        itemName = itemName,
+                        itemName = items.firstOrNull { it.id == line.itemId }?.name ?: "",
                         qty = line.qty,
                         price = line.price,
                         total = line.total,
@@ -213,6 +275,57 @@ class DocumentEditActivity : AppCompatActivity() {
         return true
     }
 
+    private fun setupSpinners() {
+        setupSpinner(
+            binding.spWarehouse,
+            warehouses.map { it.name },
+            warehouses.map { it.id },
+            warehouseId
+        ) { id -> warehouseId = id }
+
+        setupSpinner(
+            binding.spCurrency,
+            currencies.map { it.name },
+            currencies.map { it.id },
+            currencyId
+        ) { id -> currencyId = id }
+
+        setupSpinner(
+            binding.spCashbox,
+            cashboxes.map { it.name },
+            cashboxes.map { it.id },
+            cashboxId
+        ) { id -> cashboxId = id }
+    }
+
+    private fun setupSpinner(
+        spinner: Spinner,
+        names: List<String>,
+        ids: List<Long>,
+        selectedId: Long,
+        onPicked: (Long) -> Unit
+    ) {
+        if (names.isEmpty()) {
+            spinner.adapter = null
+            return
+        }
+
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, names)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                onPicked(ids[position])
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        val index = ids.indexOf(selectedId)
+        if (index >= 0) spinner.setSelection(index)
+    }
+
     private fun setupLinesAdapter() {
         lineAdapter = DocumentLineAdapter(
             isAccounting = isAccountDocument(),
@@ -223,254 +336,83 @@ class DocumentEditActivity : AppCompatActivity() {
         binding.rvLines.layoutManager = LinearLayoutManager(this)
         binding.rvLines.isNestedScrollingEnabled = false
         binding.rvLines.adapter = lineAdapter
-
-        lineAdapter.submit(lines)
+        lineAdapter.submit(lines.toList())
     }
 
-    private fun getTitleForDocType(type: String): String {
-        return getString(
-            when (type) {
-                DocType.SALE_CASH -> R.string.sales
-                DocType.SALE_CREDIT -> R.string.sales
-                DocType.PURCHASE_CASH -> R.string.purchases
-                DocType.PURCHASE_CREDIT -> R.string.purchases
-                DocType.RECEIPT -> R.string.receipt_payment
-                DocType.PAYMENT -> R.string.receipt_payment
-                DocType.JOURNAL_DAILY -> R.string.child_journal_daily
-                DocType.JOURNAL_OPENING -> R.string.child_journal_opening
-                DocType.STOCK_OUT -> R.string.child_stock_out
-                DocType.STOCK_IN -> R.string.child_stock_in
-                DocType.STOCK_TRANSFER -> R.string.child_stock_transfer
-                DocType.STOCK_ADJUSTMENT -> R.string.child_stock_adjustment
-                DocType.STOCKTAKE -> R.string.child_stocktake
-                DocType.QUOTATION -> R.string.child_quotation
-                DocType.PURCHASE_REQUEST -> R.string.child_purchase_request
-                else -> R.string.app_name
-            }
-        )
-    }
+    private fun updateHeaderVisibility() {
+        val saleOrPurchase = isSaleFamily() || isPurchaseFamily()
 
-    private fun isAccountDocument(): Boolean {
-        return docType == DocType.RECEIPT ||
-            docType == DocType.PAYMENT ||
-            docType == DocType.JOURNAL_DAILY ||
-            docType == DocType.JOURNAL_OPENING
-    }
+        binding.switchCredit.visibility = if (saleOrPurchase) View.VISIBLE else View.GONE
+        binding.cbReference.visibility = if (saleOrPurchase) View.VISIBLE else View.GONE
 
-    private fun isDiscountSupported(): Boolean {
-        return docType == DocType.SALE_CASH ||
-            docType == DocType.SALE_CREDIT ||
-            docType == DocType.PURCHASE_CASH ||
-            docType == DocType.PURCHASE_CREDIT
-    }
-
-    private fun updateVisibility() {
-        val needsParty = docType == DocType.SALE_CASH ||
-            docType == DocType.SALE_CREDIT ||
-            docType == DocType.PURCHASE_CASH ||
-            docType == DocType.PURCHASE_CREDIT
-
-        val needsWarehouse = docType == DocType.SALE_CASH ||
-            docType == DocType.SALE_CREDIT ||
-            docType == DocType.PURCHASE_CASH ||
-            docType == DocType.PURCHASE_CREDIT ||
-            docType == DocType.STOCK_OUT ||
-            docType == DocType.STOCK_IN ||
-            docType == DocType.STOCK_TRANSFER ||
-            docType == DocType.STOCK_ADJUSTMENT ||
-            docType == DocType.STOCKTAKE
-
-        val needsTargetWarehouse = docType == DocType.STOCK_TRANSFER
-
-        val needsCashbox = docType == DocType.SALE_CASH ||
+        binding.spCashbox.visibility = if (
+            docType == DocType.SALE_CASH ||
             docType == DocType.PURCHASE_CASH ||
             docType == DocType.RECEIPT ||
             docType == DocType.PAYMENT
+        ) View.VISIBLE else View.GONE
 
-        val needsSettlement = docType == DocType.STOCK_ADJUSTMENT
+        binding.spWarehouse.visibility = if (isAccountDocument()) View.GONE else View.VISIBLE
+        binding.etParty.visibility = if (saleOrPurchase) View.VISIBLE else View.GONE
 
-        binding.btnParty.visibility = if (needsParty) View.VISIBLE else View.GONE
-        binding.btnWarehouse.visibility = if (needsWarehouse) View.VISIBLE else View.GONE
-        binding.btnTargetWarehouse.visibility = if (needsTargetWarehouse) View.VISIBLE else View.GONE
-        binding.btnCashbox.visibility = if (needsCashbox) View.VISIBLE else View.GONE
-        binding.btnSettlement.visibility = if (needsSettlement) View.VISIBLE else View.GONE
-    }
-
-    private fun updateSelectors() {
-        binding.btnParty.text = getString(R.string.party) + ": " + getPartyName()
-        binding.btnWarehouse.text = getString(R.string.warehouse) + ": " + getWarehouseName(warehouseId)
-        binding.btnTargetWarehouse.text = getString(R.string.target_warehouse) + ": " + getWarehouseName(targetWarehouseId)
-        binding.btnCashbox.text = getString(R.string.cashbox) + ": " + getCashboxName()
-        binding.btnCurrency.text = getString(R.string.currency) + ": " + getCurrencyName()
-        binding.btnSettlement.text = getString(R.string.settlement_type) + ": " + getSettlementName()
-    }
-
-    private fun getPartyName(): String {
-        if (partyAccountId == 0L) return getString(R.string.none)
-        return accounts.firstOrNull { it.id == partyAccountId }?.name ?: getString(R.string.none)
-    }
-
-    private fun getWarehouseName(id: Long): String {
-        if (id == 0L) return getString(R.string.none)
-        return warehouses.firstOrNull { it.id == id }?.name ?: getString(R.string.none)
-    }
-
-    private fun getCashboxName(): String {
-        if (cashboxId == 0L) return getString(R.string.none)
-        return cashboxes.firstOrNull { it.id == cashboxId }?.name ?: getString(R.string.none)
-    }
-
-    private fun getCurrencyName(): String {
-        if (currencyId == 0L) return getString(R.string.none)
-        return currencies.firstOrNull { it.id == currencyId }?.name ?: getString(R.string.none)
-    }
-
-    private fun getSettlementName(): String {
-        return getString(
-            when (settlementType) {
-                AdjustmentType.DAMAGED -> R.string.damaged
-                AdjustmentType.INCREASE -> R.string.increase
-                AdjustmentType.SHORTAGE -> R.string.shortage
-                else -> R.string.opening
-            }
-        )
-    }
-
-    private fun showPartyDialog() {
-        if (accounts.isEmpty()) {
-            Toast.makeText(this, R.string.no_results, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val names = mutableListOf(getString(R.string.none))
-        names.addAll(accounts.map { it.name })
-
-        var selected = 0
-        if (partyAccountId != 0L) {
-            val index = accounts.indexOfFirst { it.id == partyAccountId }
-            if (index >= 0) selected = index + 1
-        }
-
-        showSingleChoiceDialog(getString(R.string.select_party), names.toTypedArray(), selected) { which ->
-            partyAccountId = if (which == 0) 0 else accounts[which - 1].id
-            updateSelectors()
-        }
-    }
-
-    private fun showWarehouseDialog() {
-        if (warehouses.isEmpty()) {
-            Toast.makeText(this, R.string.no_results, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val names = warehouses.map { it.name }.toTypedArray()
-        var selected = warehouses.indexOfFirst { it.id == warehouseId }
-        if (selected < 0) selected = 0
-
-        showSingleChoiceDialog(getString(R.string.select_warehouse), names, selected) { which ->
-            warehouseId = warehouses[which].id
-            updateSelectors()
-        }
-    }
-
-    private fun showTargetWarehouseDialog() {
-        if (warehouses.isEmpty()) {
-            Toast.makeText(this, R.string.no_results, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val names = warehouses.map { it.name }.toTypedArray()
-        var selected = warehouses.indexOfFirst { it.id == targetWarehouseId }
-        if (selected < 0) selected = 0
-
-        showSingleChoiceDialog(getString(R.string.select_target_warehouse), names, selected) { which ->
-            targetWarehouseId = warehouses[which].id
-            updateSelectors()
-        }
-    }
-
-    private fun showCashboxDialog() {
-        if (cashboxes.isEmpty()) {
-            Toast.makeText(this, R.string.no_results, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val names = cashboxes.map { it.name }.toTypedArray()
-        var selected = cashboxes.indexOfFirst { it.id == cashboxId }
-        if (selected < 0) selected = 0
-
-        showSingleChoiceDialog(getString(R.string.select_cashbox), names, selected) { which ->
-            cashboxId = cashboxes[which].id
-            updateSelectors()
-        }
-    }
-
-    private fun showCurrencyDialog() {
-        if (currencies.isEmpty()) {
-            Toast.makeText(this, R.string.no_results, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val names = currencies.map { it.name }.toTypedArray()
-        var selected = currencies.indexOfFirst { it.id == currencyId }
-        if (selected < 0) selected = 0
-
-        showSingleChoiceDialog(getString(R.string.select_currency), names, selected) { which ->
-            currencyId = currencies[which].id
-            updateSelectors()
-        }
-    }
-
-    private fun showSettlementDialog() {
-        val names = arrayOf(
-            getString(R.string.opening),
-            getString(R.string.damaged),
-            getString(R.string.increase),
-            getString(R.string.shortage)
-        )
-
-        val values = arrayOf(
-            AdjustmentType.OPENING,
-            AdjustmentType.DAMAGED,
-            AdjustmentType.INCREASE,
-            AdjustmentType.SHORTAGE
-        )
-
-        var selected = values.indexOf(settlementType)
-        if (selected < 0) selected = 0
-
-        showSingleChoiceDialog(getString(R.string.settlement_type), names, selected) { which ->
-            settlementType = values[which]
-            updateSelectors()
-        }
-    }
-
-    private fun showSingleChoiceDialog(
-        title: String,
-        items: Array<String>,
-        selected: Int,
-        onSelected: (Int) -> Unit
-    ) {
-        var current = selected
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle(title)
-            .setSingleChoiceItems(items, current) { _, which ->
-                current = which
-            }
-            .setPositiveButton(R.string.save) { _, _ ->
-                onSelected(current)
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-
-    private fun addLine() {
         if (isAccountDocument()) {
-            openAccountLineDialog(null)
+            binding.etItemSearch.setHint(R.string.select_account)
+            binding.etItemSearch.setAdapter(partyAdapter)
         } else {
-            openItemLineDialog(null)
+            binding.etItemSearch.setHint(R.string.write_item_name)
+            binding.etItemSearch.setAdapter(itemAdapter)
         }
+    }
+
+    private fun updateTitle() {
+        val base = when (docType) {
+            DocType.SALE_CASH -> R.string.title_sale_cash
+            DocType.SALE_CREDIT -> R.string.title_sale_credit
+            DocType.PURCHASE_CASH -> R.string.title_purchase_cash
+            DocType.PURCHASE_CREDIT -> R.string.title_purchase_credit
+            DocType.RECEIPT -> R.string.title_receipt
+            DocType.PAYMENT -> R.string.title_payment
+            DocType.JOURNAL_DAILY -> R.string.child_journal_daily
+            DocType.JOURNAL_OPENING -> R.string.child_journal_opening
+            DocType.STOCK_OUT -> R.string.child_stock_out
+            DocType.STOCK_IN -> R.string.child_stock_in
+            DocType.STOCK_TRANSFER -> R.string.child_stock_transfer
+            DocType.STOCK_ADJUSTMENT -> R.string.child_stock_adjustment
+            DocType.STOCKTAKE -> R.string.child_stocktake
+            DocType.QUOTATION -> R.string.child_quotation
+            DocType.PURCHASE_REQUEST -> R.string.child_purchase_request
+            else -> R.string.app_name
+        }
+
+        val prefix = if (binding.cbReference.isChecked) getString(R.string.reference) + " " else ""
+        binding.toolbar.title = prefix + getString(base)
+    }
+
+    private fun updateNumberPreview() {
+        lifecycleScope.launch {
+            if (documentId == 0L) {
+                val next = repo.documents.getLastDocNumber(docType) + 1
+                binding.etDocNumber.setText(getString(R.string.number) + "#" + next)
+            } else {
+                val doc = repo.documents.getById(documentId)
+                binding.etDocNumber.setText(getString(R.string.number) + "#" + (doc?.docNumber ?: 0))
+            }
+        }
+    }
+
+    private fun openDatePicker() {
+        val picker = MaterialDatePicker.Builder.datePicker()
+            .setTitleText(getString(R.string.date))
+            .build()
+
+        picker.addOnPositiveButtonClickListener { selection ->
+            val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            calendar.timeInMillis = selection
+            val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            binding.etDate.setText(format.format(calendar.time))
+        }
+
+        picker.show(supportFragmentManager, "date_picker")
     }
 
     private fun editLine(index: Int) {
@@ -479,86 +421,187 @@ class DocumentEditActivity : AppCompatActivity() {
         if (isAccountDocument()) {
             openAccountLineDialog(index)
         } else {
-            openItemLineDialog(index)
+            val item = items.firstOrNull { it.id == lines[index].itemId }
+            openItemDialog(item, index)
         }
     }
 
     private fun deleteLine(index: Int) {
         if (index !in lines.indices) return
-
         lines.removeAt(index)
         lineAdapter.submit(lines.toList())
-        updateTotals()
+        updateSummary()
     }
 
-    private fun openItemLineDialog(index: Int?) {
-        if (items.isEmpty()) {
-            Toast.makeText(this, R.string.no_results, Toast.LENGTH_SHORT).show()
-            return
-        }
+    private fun openItemDialog(item: ItemEntity?, index: Int?) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_item_line, null)
 
-        val names = items.map { it.name }.toTypedArray()
+        val dlgName = dialogView.findViewById<android.widget.AutoCompleteTextView>(R.id.dlgItemName)
+        val dlgQty = dialogView.findViewById<android.widget.EditText>(R.id.dlgQty)
+        val dlgPrice = dialogView.findViewById<android.widget.EditText>(R.id.dlgPrice)
+        val dlgTotal = dialogView.findViewById<android.widget.EditText>(R.id.dlgTotal)
+        val dlgNotes = dialogView.findViewById<android.widget.EditText>(R.id.dlgNotes)
 
-        var selected = 0
+        dlgName.setAdapter(itemAdapter)
+
+        var selectedItemId = item?.id ?: 0
+
+        if (item != null) dlgName.setText(item.name)
         if (index != null) {
-            val currentItemId = lines[index].itemId
-            val found = items.indexOfFirst { it.id == currentItemId }
-            if (found >= 0) selected = found
+            dlgQty.setText(fmt(lines[index].qty))
+            dlgPrice.setText(fmt(lines[index].price))
+            dlgTotal.setText(fmt(lines[index].total))
+            dlgNotes.setText(lines[index].notes)
         }
 
-        showSingleChoiceDialog(getString(R.string.select_item), names, selected) { which ->
-            val item = items[which]
-            showQtyPriceDialog(item, index)
-        }
-    }
-
-    private fun showQtyPriceDialog(item: ItemEntity, index: Int?) {
-        val container = createVerticalContainer()
-
-        val etQty = createEditText(getString(R.string.qty))
-        val etPrice = createEditText(getString(R.string.price))
-
-        if (index != null) {
-            etQty.setText(lines[index].qty.toString())
-            etPrice.setText(lines[index].price.toString())
+        dlgName.setOnItemClickListener { _, _, position, _ ->
+            selectedItemId = items[position].id
         }
 
-        container.addView(etQty)
-        container.addView(etPrice)
+        var updating = false
 
-        MaterialAlertDialogBuilder(this)
-            .setTitle(item.name)
-            .setView(container)
-            .setPositiveButton(R.string.save) { _, _ ->
-                val qty = etQty.text.toString().toDoubleOrNull() ?: 0.0
-                val price = etPrice.text.toString().toDoubleOrNull() ?: 0.0
-                val total = qty * price
+        fun recalcTotal() {
+            if (updating) return
+            updating = true
+            val q = dlgQty.text.toString().toDoubleOrNull() ?: 0.0
+            val p = dlgPrice.text.toString().toDoubleOrNull() ?: 0.0
+            dlgTotal.setText(fmt(q * p))
+            updating = false
+        }
+
+        fun recalcPrice() {
+            if (updating) return
+            updating = true
+            val q = dlgQty.text.toString().toDoubleOrNull() ?: 0.0
+            val t = dlgTotal.text.toString().toDoubleOrNull() ?: 0.0
+            if (q != 0.0) dlgPrice.setText(fmt(t / q))
+            updating = false
+        }
+
+        dlgQty.doAfterTextChanged { recalcTotal() }
+        dlgPrice.doAfterTextChanged { recalcTotal() }
+        dlgTotal.doAfterTextChanged { recalcPrice() }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
+            .create()
+
+        dialogView.findViewById<android.widget.ImageButton>(R.id.btnCloseTop).setOnClickListener { dialog.dismiss() }
+        dialogView.findViewById<android.widget.Button>(R.id.btnCancelDlg).setOnClickListener { dialog.dismiss() }
+        dialogView.findViewById<android.widget.Button>(R.id.btnCloseDlg).setOnClickListener { dialog.dismiss() }
+
+        dialogView.findViewById<android.widget.Button>(R.id.btnMoreDetails).setOnClickListener {
+            dlgNotes.visibility = if (dlgNotes.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
+
+        dialogView.findViewById<android.widget.ImageButton>(R.id.btnInfo).setOnClickListener {
+            val name = dlgName.text.toString().trim()
+            val infoItem = items.firstOrNull { it.id == selectedItemId } ?: items.firstOrNull { it.name == name }
+            if (infoItem != null) showItemInfoDialog(infoItem)
+        }
+
+        dialogView.findViewById<android.widget.Button>(R.id.btnAddLineDlg).setOnClickListener {
+            val name = dlgName.text.toString().trim()
+
+            if (name.isEmpty()) {
+                Toast.makeText(this, R.string.field_required, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val qty = dlgQty.text.toString().toDoubleOrNull() ?: 0.0
+            if (qty == 0.0) {
+                Toast.makeText(this, R.string.field_required, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val price = dlgPrice.text.toString().toDoubleOrNull() ?: 0.0
+            val total = dlgTotal.text.toString().toDoubleOrNull() ?: 0.0
+            val finalTotal = if (total != 0.0) total else qty * price
+
+            lifecycleScope.launch {
+                var finalItem = items.firstOrNull { it.id == selectedItemId } ?: items.firstOrNull { it.name == name }
+
+                if (finalItem == null) {
+                    val newId = repo.items.insert(ItemEntity(name = name))
+                    finalItem = ItemEntity(id = newId, name = name)
+                    items.add(finalItem)
+                    itemNames.add(name)
+                    itemAdapter.notifyDataSetChanged()
+                }
+
+                val notes = dlgNotes.text.toString().trim()
 
                 if (index == null) {
                     lines.add(
                         LineUi(
-                            itemId = item.id,
-                            itemName = item.name,
+                            itemId = finalItem.id,
+                            itemName = finalItem.name,
                             qty = qty,
                             price = price,
-                            total = total
+                            total = finalTotal,
+                            notes = notes
                         )
                     )
                 } else {
                     lines[index] = lines[index].copy(
-                        itemId = item.id,
-                        itemName = item.name,
+                        itemId = finalItem.id,
+                        itemName = finalItem.name,
                         qty = qty,
                         price = price,
-                        total = total
+                        total = finalTotal,
+                        notes = notes
                     )
                 }
 
                 lineAdapter.submit(lines.toList())
-                updateTotals()
+                updateSummary()
+                dialog.dismiss()
             }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+        }
+
+        dialog.show()
+    }
+
+    private fun showItemInfoDialog(item: ItemEntity) {
+        lifecycleScope.launch {
+            val balance = repo.stockBalances.getOnce(item.id, warehouseId)
+            val available = balance?.qty ?: 0.0
+
+            val salePrice = repo.itemPrices.getLatest(item.id, currencyId)?.price ?: 0.0
+            val purchaseLine = repo.queries.getLastPurchaseLine(item.id)
+            val purchasePrice = purchaseLine?.price ?: 0.0
+            val saleLine = repo.queries.getLastSaleLine(item.id)
+            val lastSale = saleLine?.price ?: 0.0
+            val lastSaleDate = if (saleLine != null) {
+                repo.documents.getById(saleLine.documentId)?.date ?: ""
+            } else {
+                ""
+            }
+
+            val dialogView = layoutInflater.inflate(R.layout.dialog_item_info, null)
+
+            dialogView.findViewById<android.widget.TextView>(R.id.infoTitle).text = item.name
+            dialogView.findViewById<android.widget.TextView>(R.id.infoAvailable).text =
+                getString(R.string.available_qty) + ": " + fmt(available)
+            dialogView.findViewById<android.widget.TextView>(R.id.infoSalePrice).text =
+                getString(R.string.sale_price) + ": " + fmt(salePrice)
+            dialogView.findViewById<android.widget.TextView>(R.id.infoPurchasePrice).text =
+                getString(R.string.purchase_price) + ": " + fmt(purchasePrice)
+            dialogView.findViewById<android.widget.TextView>(R.id.infoLastSale).text =
+                getString(R.string.last_sale_price) + ": " + fmt(lastSale) + " / " + lastSaleDate
+
+            val dialog = MaterialAlertDialogBuilder(this@DocumentEditActivity)
+                .setView(dialogView)
+                .create()
+
+            dialogView.findViewById<android.widget.Button>(R.id.btnInfoClose).setOnClickListener { dialog.dismiss() }
+            dialogView.findViewById<android.widget.Button>(R.id.btnItemData).setOnClickListener {
+                dialog.dismiss()
+                SimpleListActivity.start(this@DocumentEditActivity, ListMode.ITEMS)
+            }
+
+            dialog.show()
+        }
     }
 
     private fun openAccountLineDialog(index: Int?) {
@@ -571,25 +614,36 @@ class DocumentEditActivity : AppCompatActivity() {
 
         var selected = 0
         if (index != null) {
-            val currentAccountId = lines[index].accountId
-            val found = accounts.indexOfFirst { it.id == currentAccountId }
+            val found = accounts.indexOfFirst { it.id == lines[index].accountId }
             if (found >= 0) selected = found
         }
 
-        showSingleChoiceDialog(getString(R.string.select_account), names, selected) { which ->
-            val account = accounts[which]
-            showAmountDialog(account, index)
-        }
+        var current = selected
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.select_account)
+            .setSingleChoiceItems(names, current) { _, which -> current = which }
+            .setPositiveButton(R.string.save) { _, _ ->
+                showAmountDialog(accounts[current], index)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun showAmountDialog(account: AccountEntity, index: Int?) {
-        val container = createVerticalContainer()
+        val container = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(48, 32, 48, 16)
+        }
 
-        if (docType == DocType.RECEIPT) {
-            val etAmount = createEditText(getString(R.string.amount))
+        if (docType == DocType.RECEIPT || docType == DocType.PAYMENT) {
+            val etAmount = android.widget.EditText(this).apply {
+                hint = getString(R.string.amount)
+                inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+            }
 
             if (index != null) {
-                etAmount.setText(lines[index].credit.toString())
+                etAmount.setText(fmt(if (docType == DocType.RECEIPT) lines[index].credit else lines[index].debit))
             }
 
             container.addView(etAmount)
@@ -605,67 +659,32 @@ class DocumentEditActivity : AppCompatActivity() {
                             LineUi(
                                 accountId = account.id,
                                 accountName = account.name,
-                                credit = amount
+                                debit = if (docType == DocType.PAYMENT) amount else 0.0,
+                                credit = if (docType == DocType.RECEIPT) amount else 0.0
                             )
                         )
                     } else {
                         lines[index] = lines[index].copy(
                             accountId = account.id,
                             accountName = account.name,
-                            credit = amount
+                            debit = if (docType == DocType.PAYMENT) amount else 0.0,
+                            credit = if (docType == DocType.RECEIPT) amount else 0.0
                         )
                     }
 
                     lineAdapter.submit(lines.toList())
-                    updateTotals()
-                }
-                .setNegativeButton(R.string.cancel, null)
-                .show()
-
-        } else if (docType == DocType.PAYMENT) {
-            val etAmount = createEditText(getString(R.string.amount))
-
-            if (index != null) {
-                etAmount.setText(lines[index].debit.toString())
-            }
-
-            container.addView(etAmount)
-
-            MaterialAlertDialogBuilder(this)
-                .setTitle(account.name)
-                .setView(container)
-                .setPositiveButton(R.string.save) { _, _ ->
-                    val amount = etAmount.text.toString().toDoubleOrNull() ?: 0.0
-
-                    if (index == null) {
-                        lines.add(
-                            LineUi(
-                                accountId = account.id,
-                                accountName = account.name,
-                                debit = amount
-                            )
-                        )
-                    } else {
-                        lines[index] = lines[index].copy(
-                            accountId = account.id,
-                            accountName = account.name,
-                            debit = amount
-                        )
-                    }
-
-                    lineAdapter.submit(lines.toList())
-                    updateTotals()
+                    updateSummary()
                 }
                 .setNegativeButton(R.string.cancel, null)
                 .show()
 
         } else {
-            val etDebit = createEditText(getString(R.string.debit))
-            val etCredit = createEditText(getString(R.string.credit))
+            val etDebit = android.widget.EditText(this).apply { hint = getString(R.string.debit) }
+            val etCredit = android.widget.EditText(this).apply { hint = getString(R.string.credit) }
 
             if (index != null) {
-                etDebit.setText(lines[index].debit.toString())
-                etCredit.setText(lines[index].credit.toString())
+                etDebit.setText(fmt(lines[index].debit))
+                etCredit.setText(fmt(lines[index].credit))
             }
 
             container.addView(etDebit)
@@ -697,45 +716,30 @@ class DocumentEditActivity : AppCompatActivity() {
                     }
 
                     lineAdapter.submit(lines.toList())
-                    updateTotals()
+                    updateSummary()
                 }
                 .setNegativeButton(R.string.cancel, null)
                 .show()
         }
     }
 
-    private fun createVerticalContainer(): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(48, 32, 48, 16)
-        }
-    }
+    private fun fmt(value: Double): String = String.format(Locale.US, "%.2f", value)
 
-    private fun createEditText(hint: String): EditText {
-        return EditText(this).apply {
-            this.hint = hint
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        }
-    }
-
-    private fun updateTotals() {
+    private fun updateSummary() {
         if (isAccountDocument()) {
             val debit = lines.sumOf { it.debit }
             val credit = lines.sumOf { it.credit }
 
-            binding.tvSummary.text = String.format(
-                Locale.US,
-                "مدين: %.2f - دائن: %.2f",
-                debit,
-                credit
-            )
+            binding.tvTotal.text = fmt(debit)
+            binding.tvDiscount.text = fmt(credit)
+            binding.tvTax.text = ""
+            binding.tvFees.text = ""
+            binding.tvPaid.text = ""
+            binding.tvNet.text = fmt(debit - credit)
             return
         }
 
-        val total = lines.sumOf { it.qty * it.price }
+        val total = lines.sumOf { it.total }
 
         val discountAmount = if (discountType == DiscountType.PERCENT) {
             total * discountValue / 100.0
@@ -752,30 +756,30 @@ class DocumentEditActivity : AppCompatActivity() {
             0.0
         }
 
-        binding.tvSummary.text = String.format(
-            Locale.US,
-            "المجموع: %.2f | الخصم: %.2f | الضريبة: %.2f | الصافي: %.2f | المتبقي: %.2f",
-            total,
-            discountAmount,
-            taxAmount,
-            net,
-            remaining
-        )
+        binding.tvTotal.text = fmt(total)
+        binding.tvDiscount.text = fmt(discountAmount)
+        binding.tvTax.text = fmt(taxAmount)
+        binding.tvFees.text = fmt(feesAmount)
+        binding.tvPaid.text = fmt(paidAmount)
+        binding.tvNet.text = fmt(net) + " / " + fmt(remaining)
     }
 
     private fun showDiscountDialog() {
-        val container = createVerticalContainer()
+        val container = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(48, 32, 48, 16)
+        }
 
-        val radioGroup = RadioGroup(this)
+        val radioGroup = android.widget.RadioGroup(this)
         val amountId = 1001
         val percentId = 1002
 
-        val rbAmount = RadioButton(this).apply {
+        val rbAmount = android.widget.RadioButton(this).apply {
             id = amountId
             text = getString(R.string.discount_amount)
         }
 
-        val rbPercent = RadioButton(this).apply {
+        val rbPercent = android.widget.RadioButton(this).apply {
             id = percentId
             text = getString(R.string.discount_percent)
         }
@@ -783,23 +787,19 @@ class DocumentEditActivity : AppCompatActivity() {
         radioGroup.addView(rbAmount)
         radioGroup.addView(rbPercent)
 
-        if (discountType == DiscountType.PERCENT) {
-            radioGroup.check(percentId)
-        } else {
-            radioGroup.check(amountId)
-        }
+        if (discountType == DiscountType.PERCENT) radioGroup.check(percentId) else radioGroup.check(amountId)
 
-        val etDiscount = createEditText(getString(R.string.discount))
-        val etTax = createEditText(getString(R.string.tax_rate))
-        val etFees = createEditText(getString(R.string.fees))
-        val etFeesNote = createEditText(getString(R.string.fees_note))
-        val etPaid = createEditText(getString(R.string.paid_amount))
+        val etDiscount = android.widget.EditText(this).apply { hint = getString(R.string.discount) }
+        val etTax = android.widget.EditText(this).apply { hint = getString(R.string.tax_rate) }
+        val etFees = android.widget.EditText(this).apply { hint = getString(R.string.fees) }
+        val etFeesNote = android.widget.EditText(this).apply { hint = getString(R.string.fees_note) }
+        val etPaid = android.widget.EditText(this).apply { hint = getString(R.string.paid_amount) }
 
-        etDiscount.setText(discountValue.toString())
-        etTax.setText(taxRate.toString())
-        etFees.setText(feesAmount.toString())
+        etDiscount.setText(fmt(discountValue))
+        etTax.setText(fmt(taxRate))
+        etFees.setText(fmt(feesAmount))
         etFeesNote.setText(feesNote)
-        etPaid.setText(paidAmount.toString())
+        etPaid.setText(fmt(paidAmount))
 
         container.addView(radioGroup)
         container.addView(etDiscount)
@@ -824,10 +824,83 @@ class DocumentEditActivity : AppCompatActivity() {
                 feesNote = etFeesNote.text.toString().trim()
                 paidAmount = etPaid.text.toString().toDoubleOrNull() ?: 0.0
 
-                updateTotals()
+                updateSummary()
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
+    }
+
+    private fun resetForm() {
+        documentId = 0
+        lines.clear()
+        lineAdapter.submit(lines.toList())
+
+        partyAccountId = 0
+        discountType = DiscountType.AMOUNT
+        discountValue = 0.0
+        taxRate = 0.0
+        feesAmount = 0.0
+        feesNote = ""
+        paidAmount = 0.0
+
+        binding.etParty.setText("")
+        binding.etNotes.setText("")
+        binding.cbReference.isChecked = false
+        binding.etDate.setText(AppDate.today())
+
+        lifecycleScope.launch {
+            initDefaults()
+            updateNumberPreview()
+            updateSummary()
+        }
+    }
+
+    private fun deleteCurrent() {
+        if (documentId == 0L) return
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.delete)
+            .setMessage(R.string.confirm_delete)
+            .setPositiveButton(R.string.delete) { _, _ ->
+                lifecycleScope.launch {
+                    try {
+                        repo.documentService.deleteDocument(documentId)
+                        finish()
+                    } catch (e: Exception) {
+                        Toast.makeText(this@DocumentEditActivity, e.message ?: getString(R.string.save_failed), Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun shareDocument() {
+        val builder = StringBuilder()
+        builder.appendLine(getString(R.string.app_name))
+        builder.appendLine(binding.toolbar.title.toString())
+        builder.appendLine(binding.etDocNumber.text.toString())
+        builder.appendLine(getString(R.string.date) + ": " + binding.etDate.text.toString())
+
+        val party = binding.etParty.text.toString().trim()
+        if (party.isNotEmpty()) builder.appendLine(getString(R.string.party) + ": " + party)
+
+        lines.forEach { line ->
+            if (isAccountDocument()) {
+                builder.appendLine(line.accountName + " | " + fmt(line.debit) + " | " + fmt(line.credit))
+            } else {
+                builder.appendLine(line.itemName + " | " + fmt(line.qty) + " | " + fmt(line.price) + " | " + fmt(line.total))
+            }
+        }
+
+        builder.appendLine(getString(R.string.total) + ": " + binding.tvTotal.text)
+        builder.appendLine(getString(R.string.summary) + ": " + binding.tvNet.text)
+
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, builder.toString())
+        }
+        startActivity(Intent.createChooser(sendIntent, getString(R.string.share)))
     }
 
     private fun saveDocument() {
@@ -838,6 +911,27 @@ class DocumentEditActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
+                val partyText = binding.etParty.text.toString().trim()
+                var partyId = partyAccountId
+
+                if (partyText.isNotEmpty() && (isSaleFamily() || isPurchaseFamily())) {
+                    val existing = accounts.firstOrNull { it.name == partyText }
+
+                    if (existing != null) {
+                        partyId = existing.id
+                    } else {
+                        val nature = if (isPurchaseFamily()) AccountNature.LIABILITY else AccountNature.ASSET
+                        val newId = repo.accounts.insert(AccountEntity(name = partyText, nature = nature))
+                        val newAccount = AccountEntity(id = newId, name = partyText, nature = nature)
+                        accounts = accounts + newAccount
+                        partyNames.add(partyText)
+                        partyAdapter.notifyDataSetChanged()
+                        partyId = newId
+                    }
+                }
+
+                val reference = if (binding.cbReference.isChecked) binding.etDocNumber.text.toString() else ""
+
                 val requestLines = lines.mapIndexed { index, line ->
                     DocumentRequest.Line(
                         itemId = line.itemId,
@@ -856,10 +950,9 @@ class DocumentEditActivity : AppCompatActivity() {
                     documentId = documentId,
                     docType = docType,
                     date = binding.etDate.text.toString().trim(),
-                    reference = binding.etReference.text.toString().trim(),
-                    partyAccountId = partyAccountId,
+                    reference = reference,
+                    partyAccountId = partyId,
                     warehouseId = warehouseId,
-                    targetWarehouseId = targetWarehouseId,
                     currencyId = currencyId,
                     cashboxId = cashboxId,
                     settlementType = settlementType,

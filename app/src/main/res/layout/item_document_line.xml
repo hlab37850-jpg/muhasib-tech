@@ -5,39 +5,20 @@
     android:orientation="horizontal"
     android:background="@color/surface"
     android:gravity="center_vertical"
-    android:padding="10dp">
+    android:padding="6dp">
 
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+    <TextView android:id="@+id/tvItem" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="3" android:textSize="13sp" android:textColor="@color/textPrimary" />
+    <TextView android:id="@+id/tvQty" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/textPrimary" />
+    <TextView android:id="@+id/tvPrice" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.5" android:textSize="13sp" android:textColor="@color/textPrimary" />
+    <TextView android:id="@+id/tvTotal" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.5" android:textSize="13sp" android:textStyle="bold" android:textColor="@color/textPrimary" />
 
-        <TextView
-            android:id="@+id/tvPrimary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/textPrimary"
-            android:textSize="15sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tvSecondary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="@color/textSecondary"
-            android:textSize="13sp" />
-
-    </LinearLayout>
-
-    <TextView
+    <ImageButton
         android:id="@+id/btnDelete"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:text="@string/delete"
-        android:textColor="@color/danger"
-        android:textStyle="bold" />
-
+        android:layout_width="0dp"
+        android:layout_height="36dp"
+        android:layout_weight="0.6"
+        android:src="@drawable/ic_close"
+        android:tint="@color/danger"
+        android:background="?attr/selectableItemBackground"
+        android:contentDescription="@string/delete" />
 </LinearLayout>

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Query
 import com.muhasibtech.app.data.local.entity.AccountLimitEntity
 import com.muhasibtech.app.data.local.entity.DocumentEntity
+import com.muhasibtech.app.data.local.entity.DocumentLineEntity
 import com.muhasibtech.app.data.local.entity.ExchangeRateEntity
 import com.muhasibtech.app.data.local.entity.ItemPriceEntity
 import com.muhasibtech.app.data.local.entity.ItemUnitEntity
@@ -40,4 +41,18 @@ interface AppQueriesDao {
 
     @Query("SELECT * FROM documents WHERE docType IN ('RECEIPT', 'PAYMENT') ORDER BY date DESC, id DESC")
     fun observeReceiptPayment(): Flow<List<DocumentEntity>>
+
+    @Query(
+        "SELECT dl.* FROM document_lines dl INNER JOIN documents d ON d.id = dl.documentId " +
+            "WHERE dl.itemId = :itemId AND d.docType IN ('PURCHASE_CASH', 'PURCHASE_CREDIT') " +
+            "ORDER BY d.date DESC, d.id DESC LIMIT 1"
+    )
+    suspend fun getLastPurchaseLine(itemId: Long): DocumentLineEntity?
+
+    @Query(
+        "SELECT dl.* FROM document_lines dl INNER JOIN documents d ON d.id = dl.documentId " +
+            "WHERE dl.itemId = :itemId AND d.docType IN ('SALE_CASH', 'SALE_CREDIT') " +
+            "ORDER BY d.date DESC, d.id DESC LIMIT 1"
+    )
+    suspend fun getLastSaleLine(itemId: Long): DocumentLineEntity?
 }

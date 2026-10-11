@@ -11,11 +11,41 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/colorPrimary"
-        app:titleTextColor="@color/white" />
+        app:titleTextColor="@color/white"
+        app:menu="@menu/menu_document_list" />
+
+    <EditText
+        android:id="@+id/etSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:hint="@string/search"
+        android:visibility="gone"
+        android:inputType="text" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/colorPrimaryVariant"
+        android:padding="8dp">
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/number" android:textColor="@color/white" android:textStyle="bold" android:textSize="12sp" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="2"
+            android:text="@string/date" android:textColor="@color/white" android:textStyle="bold" android:textSize="12sp" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="2"
+            android:text="@string/name" android:textColor="@color/white" android:textStyle="bold" android:textSize="12sp" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/currency" android:textColor="@color/white" android:textStyle="bold" android:textSize="12sp" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.5"
+            android:text="@string/amount" android:textColor="@color/white" android:textStyle="bold" android:textSize="12sp" />
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
@@ -29,20 +59,37 @@
             android:layout_gravity="center"
             android:text="@string/no_results"
             android:textColor="@color/textSecondary"
-            android:textSize="16sp"
             android:visibility="gone" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:orientation="horizontal"
+        android:background="@color/colorPrimaryDark"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="8dp">
+
+        <TextView
+            android:id="@+id/tvTotal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:textSize="15sp" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|end"
-            android:layout_margin="16dp"
-            android:contentDescription="@string/add"
             android:src="@drawable/ic_add"
-            app:backgroundTint="@color/colorPrimary"
-            app:tint="@color/white" />
-
-    </FrameLayout>
+            app:fabSize="mini"
+            app:backgroundTint="@color/colorPrimaryVariant"
+            app:tint="@color/white"
+            android:contentDescription="@string/add" />
+    </LinearLayout>
 
 </LinearLayout>

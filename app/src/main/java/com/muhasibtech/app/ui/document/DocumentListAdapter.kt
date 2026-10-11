@@ -4,23 +4,32 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.muhasibtech.app.data.local.entity.DocumentEntity
-import com.muhasibtech.app.databinding.ItemDocumentListBinding
+import com.muhasibtech.app.databinding.ItemDocumentRowBinding
 import java.util.Locale
+
+data class DocRowData(
+    val doc: DocumentEntity,
+    val number: Long,
+    val date: String,
+    val partyName: String,
+    val currencyCode: String,
+    val amount: Double
+)
 
 class DocumentListAdapter(
     private val onClick: (DocumentEntity) -> Unit,
     private val onLongClick: (DocumentEntity) -> Unit
 ) : RecyclerView.Adapter<DocumentListAdapter.ViewHolder>() {
 
-    private var items: List<DocumentEntity> = emptyList()
+    private var rows: List<DocRowData> = emptyList()
 
-    fun submit(newItems: List<DocumentEntity>) {
-        items = newItems
+    fun submit(newRows: List<DocRowData>) {
+        rows = newRows
         notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemDocumentListBinding.inflate(
+        val binding = ItemDocumentRowBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
             false
@@ -28,28 +37,23 @@ class DocumentListAdapter(
         return ViewHolder(binding)
     }
 
-    override fun getItemCount(): Int = items.size
+    override fun getItemCount(): Int = rows.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val doc = items[position]
+        val row = rows[position]
 
-        holder.binding.tvPrimary.text = "رقم #${doc.docNumber} - ${doc.date}"
-        holder.binding.tvSecondary.text = String.format(
-            Locale.US,
-            "الصافي: %.2f - المتبقي: %.2f",
-            doc.netAmount,
-            doc.remainingAmount
-        )
+        holder.binding.tvNumber.text = row.number.toString()
+        holder.binding.tvDate.text = row.date
+        holder.binding.tvName.text = row.partyName
+        holder.binding.tvCurrency.text = row.currencyCode
+        holder.binding.tvAmount.text = String.format(Locale.US, "%.2f", row.amount)
 
-        holder.binding.root.setOnClickListener {
-            onClick(doc)
-        }
-
+        holder.binding.root.setOnClickListener { onClick(row.doc) }
         holder.binding.root.setOnLongClickListener {
-            onLongClick(doc)
+            onLongClick(row.doc)
             true
         }
     }
 
-    class ViewHolder(val binding: ItemDocumentListBinding) : RecyclerView.ViewHolder(binding.root)
+    class ViewHolder(val binding: ItemDocumentRowBinding) : RecyclerView.ViewHolder(binding.root)
 }

@@ -24,118 +24,218 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:padding="8dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="@color/surface"
-                android:padding="12dp">
+                android:padding="8dp">
 
-                <EditText
-                    android:id="@+id/etDate"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/date"
-                    android:inputType="date" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
 
-                <EditText
-                    android:id="@+id/etReference"
+                    <CheckBox
+                        android:id="@+id/cbReference"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/reference"
+                        android:textSize="13sp" />
+
+                    <Spinner
+                        android:id="@+id/spWarehouse"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchCredit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:showText="true"
+                        android:textOn="@string/ajil"
+                        android:textOff="@string/naqd" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:hint="@string/reference" />
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnParty"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <Spinner
+                        android:id="@+id/spCurrency"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <Spinner
+                        android:id="@+id/spCashbox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/select_party" />
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnWarehouse"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <AutoCompleteTextView
+                        android:id="@+id/etParty"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/party"
+                        android:completionThreshold="1"
+                        android:inputType="text" />
+
+                    <EditText
+                        android:id="@+id/etDate"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/date"
+                        android:focusable="false"
+                        android:clickable="true"
+                        android:inputType="date" />
+
+                    <ImageButton
+                        android:id="@+id/btnCalendar"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_calendar"
+                        android:tint="@color/colorPrimary"
+                        android:background="?attr/selectableItemBackground"
+                        android:contentDescription="@string/date" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/select_warehouse" />
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnTargetWarehouse"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/select_target_warehouse" />
+                    <EditText
+                        android:id="@+id/etDocNumber"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:enabled="false" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnCashbox"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/select_cashbox" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnCurrency"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/select_currency" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSettlement"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/settlement_type" />
-
-                <EditText
-                    android:id="@+id/etNotes"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:hint="@string/notes"
-                    android:inputType="textMultiLine"
-                    android:minLines="2" />
-
+                    <EditText
+                        android:id="@+id/etNotes"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/notes"
+                        android:inputType="text" />
+                </LinearLayout>
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAddLine"
+            <LinearLayout
+                android:id="@+id/layoutItemRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/add_line"
-                android:textColor="@color/white"
-                app:backgroundTint="@color/colorPrimary" />
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:background="@color/surface"
+                android:gravity="center_vertical"
+                android:padding="4dp">
+
+                <ImageButton
+                    android:id="@+id/btnAddItem"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_add"
+                    android:tint="@color/colorPrimary"
+                    android:background="?attr/selectableItemBackground"
+                    android:contentDescription="@string/add" />
+
+                <AutoCompleteTextView
+                    android:id="@+id/etItemSearch"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="@string/write_item_name"
+                    android:completionThreshold="1"
+                    android:inputType="text" />
+
+                <ImageButton
+                    android:id="@+id/btnClearItem"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_close"
+                    android:tint="@color/textSecondary"
+                    android:background="?attr/selectableItemBackground"
+                    android:contentDescription="@string/cancel" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:background="@color/colorPrimaryVariant"
+                android:padding="6dp">
+
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="3"
+                    android:text="@string/col_item" android:textColor="@color/white" android:textStyle="bold" android:textSize="13sp" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="@string/qty" android:textColor="@color/white" android:textStyle="bold" android:textSize="13sp" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.5"
+                    android:text="@string/price" android:textColor="@color/white" android:textStyle="bold" android:textSize="13sp" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.5"
+                    android:text="@string/total" android:textColor="@color/white" android:textStyle="bold" android:textSize="13sp" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.6"
+                    android:text="" />
+            </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvLines"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false" />
+        </LinearLayout>
+    </ScrollView>
 
-            <TextView
-                android:id="@+id/tvSummary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@color/surface"
-                android:padding="14dp"
-                android:text="@string/summary"
-                android:textColor="@color/textPrimary"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+    <LinearLayout
+        android:id="@+id/layoutSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/surface"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="8dp">
 
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/total" android:textStyle="bold" android:textSize="13sp" android:textColor="@color/textPrimary" />
+            <TextView android:id="@+id/tvTotal" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/textPrimary" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/discount" android:textStyle="bold" android:textSize="13sp" android:textColor="@color/textPrimary" />
+            <TextView android:id="@+id/tvDiscount" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/textPrimary" />
         </LinearLayout>
 
-    </ScrollView>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/tax_rate" android:textStyle="bold" android:textSize="13sp" android:textColor="@color/textPrimary" />
+            <TextView android:id="@+id/tvTax" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/textPrimary" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/fees" android:textStyle="bold" android:textSize="13sp" android:textColor="@color/textPrimary" />
+            <TextView android:id="@+id/tvFees" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/textPrimary" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/paid_amount" android:textStyle="bold" android:textSize="13sp" android:textColor="@color/textPrimary" />
+            <TextView android:id="@+id/tvPaid" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/textPrimary" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/summary" android:textStyle="bold" android:textSize="13sp" android:textColor="@color/textPrimary" />
+            <TextView android:id="@+id/tvNet" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textStyle="bold" android:textColor="@color/colorPrimary" />
+        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>

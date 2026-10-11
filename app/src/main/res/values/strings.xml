@@ -55,6 +55,10 @@
     <string name="add">إضافة</string>
     <string name="name">الاسم</string>
     <string name="code">الرمز</string>
+    <string name="number">رقم</string>
+    <string name="search">بحث</string>
+    <string name="new_doc">جديد</string>
+    <string name="close">إغلاق</string>
 
     <string name="confirm_delete">هل تريد الحذف؟</string>
     <string name="no_results">لا توجد نتائج...</string>
@@ -90,12 +94,32 @@
     <string name="target_warehouse">المخزن الهدف</string>
     <string name="settlement_type">نوع التسوية</string>
 
+    <string name="ajil">أجل</string>
+    <string name="naqd">نقد</string>
+
+    <string name="title_sale_cash">بيع نقدي</string>
+    <string name="title_sale_credit">بيع أجل</string>
+    <string name="title_purchase_cash">شراء نقدي</string>
+    <string name="title_purchase_credit">شراء أجل</string>
+    <string name="title_receipt">سند قبض</string>
+    <string name="title_payment">سند صرف</string>
+
     <string name="qty">الكمية</string>
     <string name="price">السعر</string>
     <string name="total">الإجمالي</string>
     <string name="amount">المبلغ</string>
     <string name="debit">مدين</string>
     <string name="credit">دائن</string>
+    <string name="or_total">أو الإجمالي</string>
+    <string name="other_details">تفاصيل أخرى</string>
+    <string name="write_item_name">إكتب اسم الصنف</string>
+    <string name="col_item">الصنف</string>
+
+    <string name="available_qty">الكمية المتاحة</string>
+    <string name="sale_price">سعر البيع</string>
+    <string name="purchase_price">سعر الشراء</string>
+    <string name="last_sale_price">آخر سعر للعميل</string>
+    <string name="item_data">بيانات الصنف</string>
 
     <string name="select_item">اختيار الصنف</string>
     <string name="select_account">اختيار الحساب</string>
@@ -115,13 +139,13 @@
     <string name="discount">الخصم</string>
     <string name="discount_amount">مبلغ</string>
     <string name="discount_percent">نسبة</string>
-    <string name="tax_rate">الضريبة %</string>
+    <string name="tax_rate">الضريبة</string>
     <string name="fees">رسوم أخرى</string>
     <string name="fees_note">بيان الرسوم</string>
-    <string name="paid_amount">المبلغ المدفوع</string>
+    <string name="paid_amount">المدفوع</string>
 
     <string name="add_line">إضافة بند</string>
-    <string name="summary">المخلص</string>
+    <string name="summary">الصافي</string>
 
     <string name="saved_success">تم الحفظ بنجاح</string>
     <string name="save_failed">فشل الحفظ</string>

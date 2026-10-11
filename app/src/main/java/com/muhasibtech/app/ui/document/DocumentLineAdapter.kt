@@ -3,7 +3,6 @@ package com.muhasibtech.app.ui.document
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.muhasibtech.app.R
 import com.muhasibtech.app.databinding.ItemDocumentLineBinding
 import java.util.Locale
 
@@ -35,33 +34,19 @@ class DocumentLineAdapter(
         val line = items[position]
 
         if (isAccounting) {
-            holder.binding.tvPrimary.text = line.accountName
-            holder.binding.tvSecondary.text = String.format(
-                Locale.US,
-                "مدين: %.2f - دائن: %.2f",
-                line.debit,
-                line.credit
-            )
+            holder.binding.tvItem.text = line.accountName
+            holder.binding.tvQty.text = String.format(Locale.US, "%.2f", line.debit)
+            holder.binding.tvPrice.text = String.format(Locale.US, "%.2f", line.credit)
+            holder.binding.tvTotal.text = ""
         } else {
-            holder.binding.tvPrimary.text = line.itemName
-            holder.binding.tvSecondary.text = String.format(
-                Locale.US,
-                "كمية: %.2f - سعر: %.2f - إجمالي: %.2f",
-                line.qty,
-                line.price,
-                line.total
-            )
+            holder.binding.tvItem.text = line.itemName
+            holder.binding.tvQty.text = String.format(Locale.US, "%.2f", line.qty)
+            holder.binding.tvPrice.text = String.format(Locale.US, "%.2f", line.price)
+            holder.binding.tvTotal.text = String.format(Locale.US, "%.2f", line.total)
         }
 
-        holder.binding.btnDelete.setText(R.string.delete)
-
-        holder.binding.root.setOnClickListener {
-            onClick(position)
-        }
-
-        holder.binding.btnDelete.setOnClickListener {
-            onDelete(position)
-        }
+        holder.binding.root.setOnClickListener { onClick(position) }
+        holder.binding.btnDelete.setOnClickListener { onDelete(position) }
     }
 
     class ViewHolder(val binding: ItemDocumentLineBinding) : RecyclerView.ViewHolder(binding.root)
