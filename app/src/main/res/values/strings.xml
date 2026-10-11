@@ -149,4 +149,36 @@
 
     <string name="saved_success">تم الحفظ بنجاح</string>
     <string name="save_failed">فشل الحفظ</string>
+    <string name="voucher_number">رقم السند</string>
+    <string name="type_col">نوعه</string>
+    <string name="statement_col">البيان</string>
+    <string name="total_col">المجموع</string>
+    <string name="receipt_short">قبض</string>
+    <string name="payment_short">صرف</string>
+    <string name="search_date">بحث بالتاريخ</string>
+    <string name="from_date">من تاريخ</string>
+    <string name="to_date">إلى تاريخ</string>
+    <string name="statement">كشف حساب</string>
+    <string name="settle">سداد مبلغ</string>
+    <string name="transfer_title">تحويل من حساب إلى حساب</string>
+    <string name="from_account">من حساب</string>
+    <string name="to_account">إلى حساب</string>
+    <string name="on_hand">عليه</string>
+    <string name="to_hand">له</string>
+    <string name="add_account">إضافة حساب</string>
+    <string name="parent_account">الحساب الأب</string>
+    <string name="running_balance">الرصيد</string>
+    <string name="save_confirm">حفظ؟</string>
+    <string name="yes">نعم</string>
+    <string name="no">لا</string>
+    <string name="choose_group">اختيار المجموعة</string>
+    <string name="all_accounts">كل الحسابات</string>
+    <string name="col_account">الحساب</string>
+    <string name="receipt_total">إجمالي القبض</string>
+    <string name="payment_total">إجمالي الصرف</string>
+    <string name="nature_asset">أصول</string>
+    <string name="nature_liability">التزامات</string>
+    <string name="nature_equity">حقوق ملكية</string>
+    <string name="nature_revenue">إيرادات</string>
+    <string name="nature_expense">مصروفات</string>
 </resources>

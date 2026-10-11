@@ -35,6 +35,24 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".ui.accounts.AccountsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.accounts.StatementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.accounts.SettleActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.accounts.TransferActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".ui.document.DocumentEditActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />

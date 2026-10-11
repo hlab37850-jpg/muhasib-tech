@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:padding="16dp">
+
+    <AutoCompleteTextView android:id="@+id/dlgAccountName"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:hint="@string/col_account" android:completionThreshold="1" android:inputType="text" />
+
+    <EditText android:id="@+id/dlgAmount"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:hint="@string/amount" android:inputType="numberDecimal" />
+
+    <EditText android:id="@+id/dlgNotes"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:hint="@string/notes" android:inputType="text" />
+
+    <RadioGroup android:id="@+id/rgCurrency"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" />
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+        <Button android:id="@+id/btnAddLineDlg" style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/add" />
+        <Button android:id="@+id/btnCloseDlg" style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/close" />
+    </LinearLayout>
+</LinearLayout>

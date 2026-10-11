@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/background">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar" android:layout_width="match_parent" android:layout_height="?attr/actionBarSize"
+        android:background="@color/colorPrimary" app:titleTextColor="@color/white" />
+
+    <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:padding="12dp" android:background="@color/surface">
+
+            <Spinner android:id="@+id/spCashbox" android:layout_width="match_parent" android:layout_height="wrap_content" />
+
+            <AutoCompleteTextView android:id="@+id/etParty" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:hint="@string/name" android:completionThreshold="1" android:inputType="text" />
+
+            <EditText android:id="@+id/etAmount" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:hint="@string/amount" android:inputType="numberDecimal" />
+
+            <EditText android:id="@+id/etNotes" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:hint="@string/notes" android:inputType="text" />
+
+            <EditText android:id="@+id/etDate" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:hint="@string/date" android:focusable="false" android:clickable="true" />
+
+            <RadioGroup android:id="@+id/rgCurrency" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="horizontal"
+                android:layout_marginTop="8dp" />
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:layout_marginTop="12dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDebit" android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="@string/debit" android:textColor="@color/white"
+                    app:backgroundTint="@color/danger" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCredit" android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="8dp" android:text="@string/credit"
+                    android:textColor="@color/white" app:backgroundTint="@color/success" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

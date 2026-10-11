@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.EditText
+import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
@@ -43,9 +45,13 @@ class DocumentListActivity : AppCompatActivity() {
     private lateinit var binding: ActivityDocumentListBinding
     private lateinit var repo: AppRepository
 
+    private var docType: String = ALL
     private var currentDocs: List<DocumentEntity> = emptyList()
+    private var allRows: List<DocRowData> = emptyList()
     private var partyNames: Map<Long, String> = emptyMap()
     private var currencyCodes: Map<Long, String> = emptyMap()
+    private var dateFrom: String = ""
+    private var dateTo: String = ""
 
     private val adapter = DocumentListAdapter(
         onClick = { doc -> DocumentEditActivity.startEdit(this, doc.id) },
@@ -60,38 +66,47 @@ class DocumentListActivity : AppCompatActivity() {
 
         repo = (application as MuhasibApp).repository
 
-        val docType = intent.getStringExtra(EXTRA_DOC_TYPE) ?: ALL
+        docType = intent.getStringExtra(EXTRA_DOC_TYPE) ?: ALL
         val title = intent.getStringExtra(EXTRA_TITLE) ?: getString(R.string.app_name)
 
         binding.toolbar.title = title
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
 
+        setupHeaders()
+
         binding.toolbar.setOnMenuItemClickListener { item ->
-            if (item.itemId == R.id.action_search) {
-                binding.etSearch.visibility =
-                    if (binding.etSearch.visibility == View.VISIBLE) View.GONE else View.VISIBLE
-                true
-            } else {
-                false
+            when (item.itemId) {
+                R.id.action_search -> {
+                    binding.etSearch.visibility =
+                        if (binding.etSearch.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+                    true
+                }
+                R.id.action_date -> {
+                    showDateRangeDialog()
+                    true
+                }
+                else -> false
             }
         }
 
         binding.etSearch.doAfterTextChanged { applyFilter() }
 
-        val addDocType = when (docType) {
-            SALES_ALL -> DocType.SALE_CASH
-            PURCHASES_ALL -> DocType.PURCHASE_CASH
-            CASH_ALL -> DocType.RECEIPT
-            ALL -> DocType.JOURNAL_DAILY
-            else -> docType
-        }
-
         binding.fab.setOnClickListener {
-            DocumentEditActivity.startAdd(this, addDocType)
+            if (docType == CASH_ALL) {
+                showVoucherTypeDialog()
+            } else {
+                val addDocType = when (docType) {
+                    SALES_ALL -> DocType.SALE_CASH
+                    PURCHASES_ALL -> DocType.PURCHASE_CASH
+                    ALL -> DocType.JOURNAL_DAILY
+                    else -> docType
+                }
+                DocumentEditActivity.startAdd(this, addDocType)
+            }
         }
 
-        observeDocuments(docType)
+        observeDocuments()
     }
 
     override fun onResume() {
@@ -102,12 +117,59 @@ class DocumentListActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupHeaders() {
+        if (docType == CASH_ALL) {
+            binding.tvHNumber.setText(R.string.voucher_number)
+            binding.tvHDate.setText(R.string.date)
+            binding.tvHName.setText(R.string.total_col)
+            binding.tvHCurrency.setText(R.string.statement_col)
+            binding.tvHAmount.setText(R.string.type_col)
+        }
+    }
+
+    private fun showVoucherTypeDialog() {
+        val names = arrayOf(getString(R.string.receipt_short), getString(R.string.payment_short))
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.type_col)
+            .setItems(names) { _, which ->
+                val type = if (which == 0) DocType.RECEIPT else DocType.PAYMENT
+                DocumentEditActivity.startAdd(this, type)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showDateRangeDialog() {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 32, 48, 16)
+        }
+
+        val etFrom = EditText(this).apply { hint = getString(R.string.from_date) }
+        val etTo = EditText(this).apply { hint = getString(R.string.to_date) }
+
+        container.addView(etFrom)
+        container.addView(etTo)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.search_date)
+            .setView(container)
+            .setPositiveButton(R.string.search) { _, _ ->
+                dateFrom = etFrom.text.toString().trim()
+                dateTo = etTo.text.toString().trim()
+                applyFilter()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
     private suspend fun loadMaps() {
         partyNames = repo.accounts.observeAll().first().associate { it.id to it.name }
         currencyCodes = repo.currencies.observeAll().first().associate { it.id to it.code }
     }
 
-    private fun observeDocuments(docType: String) {
+    private fun observeDocuments() {
         val flow: Flow<List<DocumentEntity>> = when (docType) {
             ALL -> repo.documents.observeAll()
             SALES_ALL -> repo.queries.observeSales()
@@ -125,38 +187,61 @@ class DocumentListActivity : AppCompatActivity() {
     }
 
     private fun rebuildRows() {
-        val rows = currentDocs.map { doc ->
+        allRows = currentDocs.map { doc ->
+            val isVoucherList = docType == CASH_ALL
+
             DocRowData(
                 doc = doc,
                 number = doc.docNumber,
                 date = doc.date,
-                partyName = if (doc.partyAccountId == 0L) "" else (partyNames[doc.partyAccountId] ?: ""),
-                currencyCode = currencyCodes[doc.currencyId] ?: "",
+                partyName = if (isVoucherList) doc.notes
+                else if (doc.partyAccountId == 0L) "" else (partyNames[doc.partyAccountId] ?: ""),
+                currencyCode = if (isVoucherList) {
+                    if (doc.docType == DocType.RECEIPT) getString(R.string.receipt_short)
+                    else getString(R.string.payment_short)
+                } else {
+                    currencyCodes[doc.currencyId] ?: ""
+                },
                 amount = doc.netAmount
             )
         }
-
-        allRows = rows
         applyFilter()
     }
-
-    private var allRows: List<DocRowData> = emptyList()
 
     private fun applyFilter() {
         val query = binding.etSearch.text.toString().trim()
 
-        val filtered = if (query.isEmpty()) {
-            allRows
-        } else {
-            allRows.filter {
+        var filtered = allRows
+
+        if (query.isNotEmpty()) {
+            filtered = filtered.filter {
                 it.partyName.contains(query) || it.number.toString().contains(query)
             }
         }
 
+        if (dateFrom.isNotEmpty()) {
+            filtered = filtered.filter { it.date >= dateFrom }
+        }
+
+        if (dateTo.isNotEmpty()) {
+            filtered = filtered.filter { it.date <= dateTo }
+        }
+
         adapter.submit(filtered)
 
-        val total = filtered.sumOf { it.amount }
-        binding.tvTotal.text = String.format(Locale.US, "%.2f", total)
+        if (docType == CASH_ALL) {
+            val receipts = filtered.filter { it.doc.docType == DocType.RECEIPT }.sumOf { it.amount }
+            val payments = filtered.filter { it.doc.docType == DocType.PAYMENT }.sumOf { it.amount }
+            binding.tvTotal.text = String.format(
+                Locale.US,
+                "%s: %.2f | %s: %.2f",
+                getString(R.string.receipt_short), receipts,
+                getString(R.string.payment_short), payments
+            )
+        } else {
+            binding.tvTotal.text = String.format(Locale.US, "%.2f", filtered.sumOf { it.amount })
+        }
+
         binding.tvEmpty.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
     }
 
@@ -169,9 +254,7 @@ class DocumentListActivity : AppCompatActivity() {
                 .setTitle(R.string.delete)
                 .setMessage(R.string.confirm_delete)
                 .setPositiveButton(R.string.delete) { _, _ ->
-                    lifecycleScope.launch {
-                        repo.documentService.deleteDocument(doc.id)
-                    }
+                    lifecycleScope.launch { repo.documentService.deleteDocument(doc.id) }
                 }
                 .setNegativeButton(R.string.cancel, null)
                 .show()

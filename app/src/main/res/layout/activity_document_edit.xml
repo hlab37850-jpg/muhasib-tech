@@ -186,13 +186,13 @@
                 android:background="@color/colorPrimaryVariant"
                 android:padding="6dp">
 
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="3"
+                <TextView android:id="@+id/tvHItem" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="3"
                     android:text="@string/col_item" android:textColor="@color/white" android:textStyle="bold" android:textSize="13sp" />
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                <TextView android:id="@+id/tvHQty" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
                     android:text="@string/qty" android:textColor="@color/white" android:textStyle="bold" android:textSize="13sp" />
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.5"
+                <TextView android:id="@+id/tvHPrice" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.5"
                     android:text="@string/price" android:textColor="@color/white" android:textStyle="bold" android:textSize="13sp" />
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.5"
+                <TextView android:id="@+id/tvHTotal" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.5"
                     android:text="@string/total" android:textColor="@color/white" android:textStyle="bold" android:textSize="13sp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.6"
                     android:text="" />

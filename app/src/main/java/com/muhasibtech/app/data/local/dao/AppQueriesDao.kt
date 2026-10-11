@@ -12,6 +12,12 @@ import com.muhasibtech.app.data.local.entity.JournalLineEntity
 import com.muhasibtech.app.data.local.entity.StockBalanceEntity
 import kotlinx.coroutines.flow.Flow
 
+data class AccountBalance(
+    val accountId: Long,
+    val totalDebit: Double,
+    val totalCredit: Double
+)
+
 @Dao
 interface AppQueriesDao {
 
@@ -55,4 +61,7 @@ interface AppQueriesDao {
             "ORDER BY d.date DESC, d.id DESC LIMIT 1"
     )
     suspend fun getLastSaleLine(itemId: Long): DocumentLineEntity?
+
+    @Query("SELECT accountId, SUM(debit) AS totalDebit, SUM(credit) AS totalCredit FROM journal_lines GROUP BY accountId")
+    suspend fun getAccountBalances(): List<AccountBalance>
 }

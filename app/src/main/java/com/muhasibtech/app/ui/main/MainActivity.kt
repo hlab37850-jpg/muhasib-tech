@@ -14,6 +14,7 @@ import com.muhasibtech.app.data.repository.AppRepository
 import com.muhasibtech.app.databinding.ActivityMainBinding
 import com.muhasibtech.app.ui.document.DocumentListActivity
 import com.muhasibtech.app.ui.list.ListMode
+import com.muhasibtech.app.ui.accounts.AccountsActivity
 import com.muhasibtech.app.ui.list.SimpleListActivity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -157,7 +158,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnAccounts.setOnClickListener {
-            SimpleListActivity.start(this, ListMode.ACCOUNTS)
+            AccountsActivity.start(this)
         }
     }
 
@@ -281,8 +282,8 @@ class MainActivity : AppCompatActivity() {
             MainNav.PURCHASE_REQUEST -> DocumentListActivity.start(this, DocType.PURCHASE_REQUEST, getString(R.string.child_purchase_request))
 
             MainNav.ADD_WAREHOUSE -> SimpleListActivity.start(this, ListMode.WAREHOUSES)
-            MainNav.ADD_ACCOUNT -> SimpleListActivity.start(this, ListMode.ACCOUNTS)
-            MainNav.CHART_ACCOUNTS -> SimpleListActivity.start(this, ListMode.ACCOUNTS)
+            MainNav.ADD_ACCOUNT -> AccountsActivity.start(this)
+            MainNav.CHART_ACCOUNTS -> AccountsActivity.start(this)
             MainNav.CASHBOX_STATEMENT -> SimpleListActivity.start(this, ListMode.CASHBOXES)
             MainNav.YEARLY_CLOSE -> SimpleListActivity.start(this, ListMode.YEARLY_CLOSINGS)
 
@@ -296,10 +297,10 @@ class MainActivity : AppCompatActivity() {
 
             MainNav.REPORT_ITEM_MOVEMENT -> SimpleListActivity.start(this, ListMode.STOCK_BALANCES)
             MainNav.REPORT_REMAINING_STOCK -> SimpleListActivity.start(this, ListMode.STOCK_BALANCES)
-            MainNav.REPORT_ACCOUNT_BALANCES -> SimpleListActivity.start(this, ListMode.ACCOUNTS)
+            MainNav.REPORT_ACCOUNT_BALANCES -> AccountsActivity.start(this)
             MainNav.REPORT_TRIAL_BALANCE -> SimpleListActivity.start(this, ListMode.JOURNAL_LINES)
             MainNav.REPORT_INCOME -> SimpleListActivity.start(this, ListMode.JOURNAL_LINES)
-            MainNav.REPORT_FINANCIAL_POSITION -> SimpleListActivity.start(this, ListMode.ACCOUNTS)
+            MainNav.REPORT_FINANCIAL_POSITION -> AccountsActivity.start(this)
             MainNav.REPORT_OTHER -> SimpleListActivity.start(this, ListMode.JOURNAL_LINES)
         }
     }

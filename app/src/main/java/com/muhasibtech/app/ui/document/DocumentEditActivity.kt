@@ -32,6 +32,7 @@ import com.muhasibtech.app.databinding.ActivityDocumentEditBinding
 import com.muhasibtech.app.ui.list.ListMode
 import com.muhasibtech.app.ui.list.SimpleListActivity
 import com.muhasibtech.app.util.AppDate
+import com.muhasibtech.app.util.CurrencyPicker
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -78,6 +79,7 @@ class DocumentEditActivity : AppCompatActivity() {
     private var feesAmount: Double = 0.0
     private var feesNote: String = ""
     private var paidAmount: Double = 0.0
+    private var suppressSwitch: Boolean = false
 
     private val lines = mutableListOf<LineUi>()
 
@@ -130,7 +132,9 @@ class DocumentEditActivity : AppCompatActivity() {
         }
 
         binding.btnAddItem.setOnClickListener {
-            if (isAccountDocument()) {
+            if (isVoucher()) {
+                openVoucherLineDialog(null)
+            } else if (isAccountDocument()) {
                 openAccountLineDialog(null)
             } else {
                 openItemDialog(null, null)
@@ -149,11 +153,37 @@ class DocumentEditActivity : AppCompatActivity() {
         }
 
         binding.switchCredit.setOnCheckedChangeListener { _, checked ->
+            if (suppressSwitch) return@setOnCheckedChangeListener
+
+            val oldType = docType
+
             docType = when {
                 isSaleFamily() -> if (checked) DocType.SALE_CREDIT else DocType.SALE_CASH
                 isPurchaseFamily() -> if (checked) DocType.PURCHASE_CREDIT else DocType.PURCHASE_CASH
+                isVoucher() -> if (checked) DocType.PAYMENT else DocType.RECEIPT
                 else -> docType
             }
+
+            if (isVoucher() && documentId > 0L) {
+                MaterialAlertDialogBuilder(this)
+                    .setMessage(getString(R.string.save_confirm) + " " + getString(R.string.number))
+                    .setPositiveButton(R.string.yes) { _, _ ->
+                        documentId = 0L
+                        updateHeaderVisibility()
+                        updateTitle()
+                        updateNumberPreview()
+                    }
+                    .setNegativeButton(R.string.no) { _, _ ->
+                        docType = oldType
+                        suppressSwitch = true
+                        suppressSwitch = false
+                        updateHeaderVisibility()
+                        updateTitle()
+                    }
+                    .show()
+                return@setOnCheckedChangeListener
+            }
+
             updateHeaderVisibility()
             updateTitle()
             if (documentId == 0L) updateNumberPreview()
@@ -175,6 +205,8 @@ class DocumentEditActivity : AppCompatActivity() {
             docType == DocType.PAYMENT ||
             docType == DocType.JOURNAL_DAILY ||
             docType == DocType.JOURNAL_OPENING
+
+    private fun isVoucher(): Boolean = docType == DocType.RECEIPT || docType == DocType.PAYMENT
 
     private fun isDiscountSupported(): Boolean = isSaleFamily() || isPurchaseFamily()
 
@@ -241,8 +273,12 @@ class DocumentEditActivity : AppCompatActivity() {
             if (doc.partyAccountId == 0L) "" else (accounts.firstOrNull { it.id == doc.partyAccountId }?.name ?: "")
         )
 
+        suppressSwitch = true
         binding.switchCredit.isChecked =
-            docType == DocType.SALE_CREDIT || docType == DocType.PURCHASE_CREDIT
+            docType == DocType.SALE_CREDIT ||
+                docType == DocType.PURCHASE_CREDIT ||
+                docType == DocType.PAYMENT
+        suppressSwitch = false
 
         val docLines = repo.documentLines.getByDocument(documentId)
         lines.clear()
@@ -326,9 +362,17 @@ class DocumentEditActivity : AppCompatActivity() {
         if (index >= 0) spinner.setSelection(index)
     }
 
+    private fun lineMode(): String {
+        return when {
+            isVoucher() -> DocumentLineAdapter.MODE_VOUCHER
+            isAccountDocument() -> DocumentLineAdapter.MODE_JOURNAL
+            else -> DocumentLineAdapter.MODE_ITEM
+        }
+    }
+
     private fun setupLinesAdapter() {
         lineAdapter = DocumentLineAdapter(
-            isAccounting = isAccountDocument(),
+            mode = lineMode(),
             onClick = { index -> editLine(index) },
             onDelete = { index -> deleteLine(index) }
         )
@@ -342,7 +386,24 @@ class DocumentEditActivity : AppCompatActivity() {
     private fun updateHeaderVisibility() {
         val saleOrPurchase = isSaleFamily() || isPurchaseFamily()
 
-        binding.switchCredit.visibility = if (saleOrPurchase) View.VISIBLE else View.GONE
+        if (isVoucher()) {
+            binding.tvHItem.setText(R.string.col_account)
+            binding.tvHQty.setText(R.string.amount)
+            binding.tvHPrice.setText(R.string.notes)
+            binding.tvHTotal.text = ""
+        } else if (isAccountDocument()) {
+            binding.tvHItem.setText(R.string.col_account)
+            binding.tvHQty.setText(R.string.debit)
+            binding.tvHPrice.setText(R.string.credit)
+            binding.tvHTotal.text = ""
+        } else {
+            binding.tvHItem.setText(R.string.col_item)
+            binding.tvHQty.setText(R.string.qty)
+            binding.tvHPrice.setText(R.string.price)
+            binding.tvHTotal.setText(R.string.total)
+        }
+
+        binding.switchCredit.visibility = if (saleOrPurchase || isVoucher()) View.VISIBLE else View.GONE
         binding.cbReference.visibility = if (saleOrPurchase) View.VISIBLE else View.GONE
 
         binding.spCashbox.visibility = if (
@@ -418,7 +479,9 @@ class DocumentEditActivity : AppCompatActivity() {
     private fun editLine(index: Int) {
         if (index !in lines.indices) return
 
-        if (isAccountDocument()) {
+        if (isVoucher()) {
+            openVoucherLineDialog(index)
+        } else if (isAccountDocument()) {
             openAccountLineDialog(index)
         } else {
             val item = items.firstOrNull { it.id == lines[index].itemId }
@@ -602,6 +665,81 @@ class DocumentEditActivity : AppCompatActivity() {
 
             dialog.show()
         }
+    }
+
+    private fun openVoucherLineDialog(index: Int?) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_voucher_line, null)
+
+        val dlgName = dialogView.findViewById<android.widget.AutoCompleteTextView>(R.id.dlgAccountName)
+        val dlgAmount = dialogView.findViewById<android.widget.EditText>(R.id.dlgAmount)
+        val dlgNotes = dialogView.findViewById<android.widget.EditText>(R.id.dlgNotes)
+        val rgCurrency = dialogView.findViewById<android.widget.RadioGroup>(R.id.rgCurrency)
+
+        dlgName.setAdapter(partyAdapter)
+
+        var selectedAccountId = 0L
+        if (index != null) selectedAccountId = lines[index].accountId
+
+        if (index != null) {
+            val line = lines[index]
+            dlgName.setText(line.accountName)
+            dlgAmount.setText(fmt(if (line.credit != 0.0) line.credit else line.debit))
+            dlgNotes.setText(line.notes)
+        }
+
+        dlgName.setOnItemClickListener { _, _, position, _ ->
+            selectedAccountId = accounts[position].id
+        }
+
+        CurrencyPicker.build(this, rgCurrency, currencies, currencyId) { id ->
+            currencyId = id
+        }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
+            .create()
+
+        dialogView.findViewById<android.widget.Button>(R.id.btnCloseDlg).setOnClickListener { dialog.dismiss() }
+
+        dialogView.findViewById<android.widget.Button>(R.id.btnAddLineDlg).setOnClickListener {
+            val name = dlgName.text.toString().trim()
+            val amount = dlgAmount.text.toString().toDoubleOrNull() ?: 0.0
+
+            if (name.isEmpty() || amount == 0.0 || selectedAccountId == 0L) {
+                Toast.makeText(this, R.string.field_required, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val notes = dlgNotes.text.toString().trim()
+            val debit = if (docType == DocType.PAYMENT) amount else 0.0
+            val credit = if (docType == DocType.RECEIPT) amount else 0.0
+
+            if (index == null) {
+                lines.add(
+                    LineUi(
+                        accountId = selectedAccountId,
+                        accountName = name,
+                        debit = debit,
+                        credit = credit,
+                        notes = notes
+                    )
+                )
+            } else {
+                lines[index] = lines[index].copy(
+                    accountId = selectedAccountId,
+                    accountName = name,
+                    debit = debit,
+                    credit = credit,
+                    notes = notes
+                )
+            }
+
+            lineAdapter.submit(lines.toList())
+            updateSummary()
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun openAccountLineDialog(index: Int?) {
@@ -909,6 +1047,14 @@ class DocumentEditActivity : AppCompatActivity() {
             return
         }
 
+        MaterialAlertDialogBuilder(this)
+            .setMessage(R.string.save_confirm)
+            .setPositiveButton(R.string.yes) { _, _ -> doSave() }
+            .setNegativeButton(R.string.no, null)
+            .show()
+    }
+
+    private fun doSave() {
         lifecycleScope.launch {
             try {
                 val partyText = binding.etParty.text.toString().trim()

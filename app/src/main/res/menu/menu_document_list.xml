@@ -6,4 +6,8 @@
         android:title="@string/search"
         android:icon="@drawable/ic_search"
         app:showAsAction="always" />
+    <item
+        android:id="@+id/action_date"
+        android:title="@string/search_date"
+        app:showAsAction="never" />
 </menu>

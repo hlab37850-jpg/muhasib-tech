@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/background">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar" android:layout_width="match_parent" android:layout_height="?attr/actionBarSize"
+        android:background="@color/colorPrimary" app:titleTextColor="@color/white" />
+
+    <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:padding="12dp" android:background="@color/surface">
+
+            <AutoCompleteTextView android:id="@+id/etFrom" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:hint="@string/from_account"
+                android:completionThreshold="1" android:inputType="text" />
+
+            <AutoCompleteTextView android:id="@+id/etTo" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:hint="@string/to_account" android:completionThreshold="1" android:inputType="text" />
+
+            <EditText android:id="@+id/etAmount" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:hint="@string/amount" android:inputType="numberDecimal" />
+
+            <EditText android:id="@+id/etNotes" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:hint="@string/notes" android:inputType="text" />
+
+            <EditText android:id="@+id/etDate" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:hint="@string/date" android:focusable="false" android:clickable="true" />
+
+            <RadioGroup android:id="@+id/rgCurrency" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="horizontal"
+                android:layout_marginTop="8dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSave" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="12dp"
+                android:text="@string/save" android:textColor="@color/white"
+                app:backgroundTint="@color/colorPrimary" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
