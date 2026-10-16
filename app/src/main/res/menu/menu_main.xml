@@ -9,6 +9,12 @@
         app:showAsAction="always" />
 
     <item
+        android:id="@+id/action_backup"
+        android:title="@string/backup_database"
+        android:icon="@drawable/ic_share"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_share"
         android:title="@string/share"
         android:icon="@drawable/ic_share"
