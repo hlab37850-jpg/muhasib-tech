@@ -47,6 +47,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val restoreLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            lifecycleScope.launch {
+                val app = application as MuhasibApp
+                runCatching {
+                    DatabaseBackup.restore(this@MainActivity, app.database, uri)
+                }.onSuccess {
+                    app.reloadDatabase()
+                    Toast.makeText(
+                        this@MainActivity,
+                        "تمت استعادة النسخة الاحتياطية بنجاح",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    val restart = Intent(this@MainActivity, MainActivity::class.java)
+                    finish()
+                    startActivity(restart)
+                }.onFailure { error ->
+                    // Reopen the current database if restore closed it before failing.
+                    app.reloadDatabase()
+                    Toast.makeText(
+                        this@MainActivity,
+                        "تعذرت الاستعادة: ${error.localizedMessage ?: "خطأ غير معروف"}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+
     private val expandedSections = mutableSetOf(1, 2, 3, 4, 5)
 
     private val mainAdapter = MainAdapter(
@@ -154,6 +185,11 @@ class MainActivity : AppCompatActivity() {
 
                 R.id.action_backup -> {
                     backupLauncher.launch("muhasib-tech-backup.db")
+                    true
+                }
+
+                R.id.action_restore_backup -> {
+                    restoreLauncher.launch(arrayOf("application/octet-stream", "application/x-sqlite3", "*/*"))
                     true
                 }
 
