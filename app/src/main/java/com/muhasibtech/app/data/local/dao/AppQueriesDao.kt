@@ -83,7 +83,7 @@ interface AppQueriesDao {
             "FROM accounts a LEFT JOIN journal_lines j ON j.accountId = a.id " +
             "GROUP BY a.id, a.name, a.code ORDER BY a.code, a.name"
     )
-    suspend fun getTrialBalance(): List<TrialBalanceRow>
+    fun observeTrialBalance(): Flow<List<TrialBalanceRow>>
 
     @Query(
         "SELECT a.id AS accountId, a.name AS accountName, a.nature AS nature, " +
@@ -93,7 +93,7 @@ interface AppQueriesDao {
             "WHERE a.nature IN ('REVENUE', 'EXPENSE') " +
             "GROUP BY a.id, a.name, a.nature ORDER BY a.nature, a.code, a.name"
     )
-    suspend fun getIncomeStatement(): List<FinancialReportRow>
+    fun observeIncomeStatement(): Flow<List<FinancialReportRow>>
 
     @Query(
         "SELECT a.id AS accountId, a.name AS accountName, a.nature AS nature, " +
@@ -103,7 +103,7 @@ interface AppQueriesDao {
             "WHERE a.nature IN ('ASSET', 'LIABILITY', 'EQUITY') " +
             "GROUP BY a.id, a.name, a.nature ORDER BY a.nature, a.code, a.name"
     )
-    suspend fun getFinancialPosition(): List<FinancialReportRow>
+    fun observeFinancialPosition(): Flow<List<FinancialReportRow>>
 
     @Query("SELECT accountId, SUM(debit) AS totalDebit, SUM(credit) AS totalCredit FROM journal_lines GROUP BY accountId")
     suspend fun getAccountBalances(): List<AccountBalance>
