@@ -49,5 +49,11 @@ class AppRepository(
                 instance
             }
         }
+
+        fun clearInstanceForDatabaseRestore() {
+            synchronized(this) {
+                INSTANCE = null
+            }
+        }
     }
 }
