@@ -85,6 +85,11 @@
     <string name="title_item_prices">أسعار الأصناف</string>
     <string name="title_stock_balances">أرصدة المخزون</string>
     <string name="title_journal_lines">القيود اليومية</string>
+    <string name="title_trial_balance">ميزان المراجعة</string>
+    <string name="title_income_statement">قائمة الدخل</string>
+    <string name="title_financial_position">المركز المالي</string>
+    <string name="report_debit_credit">مدين: %1$s - دائن: %2$s</string>
+    <string name="report_amount">الرصيد: %1$s</string>
 
     <string name="date">التاريخ</string>
     <string name="reference">مرجع</string>
