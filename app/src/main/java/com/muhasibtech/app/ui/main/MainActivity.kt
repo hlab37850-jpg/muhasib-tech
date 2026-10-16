@@ -325,9 +325,9 @@ class MainActivity : AppCompatActivity() {
             MainNav.REPORT_ITEM_MOVEMENT -> SimpleListActivity.start(this, ListMode.STOCK_BALANCES)
             MainNav.REPORT_REMAINING_STOCK -> SimpleListActivity.start(this, ListMode.STOCK_BALANCES)
             MainNav.REPORT_ACCOUNT_BALANCES -> AccountsActivity.start(this)
-            MainNav.REPORT_TRIAL_BALANCE -> SimpleListActivity.start(this, ListMode.JOURNAL_LINES)
-            MainNav.REPORT_INCOME -> SimpleListActivity.start(this, ListMode.JOURNAL_LINES)
-            MainNav.REPORT_FINANCIAL_POSITION -> AccountsActivity.start(this)
+            MainNav.REPORT_TRIAL_BALANCE -> SimpleListActivity.start(this, ListMode.TRIAL_BALANCE)
+            MainNav.REPORT_INCOME -> SimpleListActivity.start(this, ListMode.INCOME_STATEMENT)
+            MainNav.REPORT_FINANCIAL_POSITION -> SimpleListActivity.start(this, ListMode.FINANCIAL_POSITION)
             MainNav.REPORT_OTHER -> SimpleListActivity.start(this, ListMode.JOURNAL_LINES)
         }
     }
