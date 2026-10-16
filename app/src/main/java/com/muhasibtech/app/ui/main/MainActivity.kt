@@ -3,6 +3,7 @@ package com.muhasibtech.app.ui.main
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -19,11 +20,32 @@ import com.muhasibtech.app.ui.list.SimpleListActivity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import com.muhasibtech.app.util.DatabaseBackup
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var repo: AppRepository
+
+    private val backupLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        if (uri != null) {
+            lifecycleScope.launch {
+                runCatching {
+                    DatabaseBackup.export(this@MainActivity, (application as MuhasibApp).database, uri)
+                }.onSuccess {
+                    Toast.makeText(this@MainActivity, "تم حفظ النسخة الاحتياطية بنجاح", Toast.LENGTH_LONG).show()
+                }.onFailure { error ->
+                    Toast.makeText(
+                        this@MainActivity,
+                        "تعذر إنشاء النسخة الاحتياطية: ${error.localizedMessage ?: "خطأ غير معروف"}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
 
     private val expandedSections = mutableSetOf(1, 2, 3, 4, 5)
 
@@ -127,6 +149,11 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.action_notifications -> {
                     SimpleListActivity.start(this, ListMode.ALERTS)
+                    true
+                }
+
+                R.id.action_backup -> {
+                    backupLauncher.launch("muhasib-tech-backup.db")
                     true
                 }
 
