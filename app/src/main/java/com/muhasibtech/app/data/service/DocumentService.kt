@@ -35,7 +35,8 @@ class DocumentService(
         if (request.lines.any { line ->
                 !line.qty.isFinite() || !line.price.isFinite() || !line.total.isFinite() ||
                     !line.debit.isFinite() || !line.credit.isFinite() ||
-                    line.price < 0.0 || line.debit < 0.0 || line.credit < 0.0
+                    line.qty < 0.0 || line.price < 0.0 || line.total < 0.0 ||
+                    line.debit < 0.0 || line.credit < 0.0
             }
         ) {
             throw IllegalStateException("توجد كمية أو قيمة مالية غير صحيحة في أحد البنود")
@@ -137,6 +138,10 @@ class DocumentService(
                 0.0
             }
 
+            if (isItemDocument(request.docType) && discountAmount - totalAmount > 0.001) {
+                throw IllegalStateException("لا يمكن أن يتجاوز الخصم إجمالي المستند")
+            }
+
             val taxAmount = if (isItemDocument(request.docType) && request.taxRate > 0.0) {
                 (totalAmount - discountAmount) * request.taxRate / 100.0
             } else {
@@ -158,6 +163,13 @@ class DocumentService(
                 netAmount
             } else {
                 request.paidAmount
+            }
+
+            if ((request.docType == DocType.SALE_CASH ||
+                    request.docType == DocType.PURCHASE_CASH) &&
+                paidAmount - netAmount > 0.001
+            ) {
+                throw IllegalStateException("المبلغ المدفوع نقدًا لا يجوز أن يتجاوز صافي المستند")
             }
 
             val isCreditDocument = request.docType == DocType.SALE_CREDIT ||
