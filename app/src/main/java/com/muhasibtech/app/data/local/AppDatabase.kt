@@ -78,5 +78,16 @@ abstract class AppDatabase : RoomDatabase() {
                 instance
             }
         }
+
+        /**
+         * Closes the singleton before a validated database file is installed.
+         * Call only when the app is switching to a user-selected backup.
+         */
+        fun closeInstanceForRestore() {
+            synchronized(this) {
+                INSTANCE?.close()
+                INSTANCE = null
+            }
+        }
     }
 }
