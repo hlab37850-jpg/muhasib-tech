@@ -98,6 +98,9 @@ class SimpleListActivity : AppCompatActivity() {
                 ListMode.ITEM_PRICES -> R.string.title_item_prices
                 ListMode.STOCK_BALANCES -> R.string.title_stock_balances
                 ListMode.JOURNAL_LINES -> R.string.title_journal_lines
+                ListMode.TRIAL_BALANCE -> R.string.title_trial_balance
+                ListMode.INCOME_STATEMENT -> R.string.title_income_statement
+                ListMode.FINANCIAL_POSITION -> R.string.title_financial_position
             }
         )
     }
@@ -214,6 +217,46 @@ class SimpleListActivity : AppCompatActivity() {
                         it.id,
                         "حساب: ${it.accountId}",
                         "مدين: ${it.debit} - دائن: ${it.credit} - ${it.date}"
+                    )
+                }
+            }
+
+            ListMode.TRIAL_BALANCE -> repo.queries.observeTrialBalance().map { list ->
+                list.map {
+                    SimpleItem(
+                        it.accountId,
+                        listOf(it.code, it.accountName).filter { part -> part.isNotBlank() }.joinToString(" - "),
+                        getString(R.string.report_debit_credit, it.debit.toString(), it.credit.toString())
+                    )
+                }
+            }
+
+            ListMode.INCOME_STATEMENT -> repo.queries.observeIncomeStatement().map { list ->
+                list.map {
+                    val natureLabel = if (it.nature == "REVENUE") {
+                        getString(R.string.nature_revenue)
+                    } else {
+                        getString(R.string.nature_expense)
+                    }
+                    SimpleItem(
+                        it.accountId,
+                        it.accountName,
+                        "$natureLabel: ${it.amount}"
+                    )
+                }
+            }
+
+            ListMode.FINANCIAL_POSITION -> repo.queries.observeFinancialPosition().map { list ->
+                list.map {
+                    val natureLabel = when (it.nature) {
+                        "ASSET" -> getString(R.string.nature_asset)
+                        "LIABILITY" -> getString(R.string.nature_liability)
+                        else -> getString(R.string.nature_equity)
+                    }
+                    SimpleItem(
+                        it.accountId,
+                        it.accountName,
+                        "$natureLabel: ${it.amount}"
                     )
                 }
             }
