@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">المحاسب تك</string>
+    <string name="backup_database">نسخة احتياطية لقاعدة البيانات</string>
 
     <string name="sales">المبيعات</string>
     <string name="purchases">المشتريات</string>
