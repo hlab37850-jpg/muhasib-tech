@@ -222,43 +222,59 @@ class SimpleListActivity : AppCompatActivity() {
             }
 
             ListMode.TRIAL_BALANCE -> repo.queries.observeTrialBalance().map { list ->
-                list.map {
+                val rows = list.map {
                     SimpleItem(
                         it.accountId,
                         listOf(it.code, it.accountName).filter { part -> part.isNotBlank() }.joinToString(" - "),
                         getString(R.string.report_debit_credit, it.debit.toString(), it.credit.toString())
                     )
                 }
+                rows + SimpleItem(
+                    -1L,
+                    "الإجمالي",
+                    getString(
+                        R.string.report_debit_credit,
+                        list.sumOf { it.debit }.toString(),
+                        list.sumOf { it.credit }.toString()
+                    )
+                )
             }
 
             ListMode.INCOME_STATEMENT -> repo.queries.observeIncomeStatement().map { list ->
-                list.map {
+                val rows = list.map {
                     val natureLabel = if (it.nature == "REVENUE") {
                         getString(R.string.nature_revenue)
                     } else {
                         getString(R.string.nature_expense)
                     }
-                    SimpleItem(
-                        it.accountId,
-                        it.accountName,
-                        "$natureLabel: ${it.amount}"
-                    )
+                    SimpleItem(it.accountId, it.accountName, "$natureLabel: ${it.amount}")
                 }
+                val revenue = list.filter { it.nature == "REVENUE" }.sumOf { it.amount }
+                val expenses = list.filter { it.nature == "EXPENSE" }.sumOf { it.amount }
+                rows + listOf(
+                    SimpleItem(-2L, "إجمالي الإيرادات", revenue.toString()),
+                    SimpleItem(-3L, "إجمالي المصروفات", expenses.toString()),
+                    SimpleItem(-4L, "صافي الربح / الخسارة", (revenue - expenses).toString())
+                )
             }
 
             ListMode.FINANCIAL_POSITION -> repo.queries.observeFinancialPosition().map { list ->
-                list.map {
+                val rows = list.map {
                     val natureLabel = when (it.nature) {
                         "ASSET" -> getString(R.string.nature_asset)
                         "LIABILITY" -> getString(R.string.nature_liability)
                         else -> getString(R.string.nature_equity)
                     }
-                    SimpleItem(
-                        it.accountId,
-                        it.accountName,
-                        "$natureLabel: ${it.amount}"
-                    )
+                    SimpleItem(it.accountId, it.accountName, "$natureLabel: ${it.amount}")
                 }
+                val assets = list.filter { it.nature == "ASSET" }.sumOf { it.amount }
+                val liabilities = list.filter { it.nature == "LIABILITY" }.sumOf { it.amount }
+                val equity = list.filter { it.nature == "EQUITY" }.sumOf { it.amount }
+                rows + listOf(
+                    SimpleItem(-5L, "إجمالي الأصول", assets.toString()),
+                    SimpleItem(-6L, "إجمالي الالتزامات", liabilities.toString()),
+                    SimpleItem(-7L, "إجمالي حقوق الملكية", equity.toString())
+                )
             }
         }
 
