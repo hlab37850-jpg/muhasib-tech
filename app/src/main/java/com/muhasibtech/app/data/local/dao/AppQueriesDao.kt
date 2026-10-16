@@ -101,7 +101,17 @@ interface AppQueriesDao {
             "ELSE COALESCE(SUM(j.credit), 0) - COALESCE(SUM(j.debit), 0) END AS amount " +
             "FROM accounts a LEFT JOIN journal_lines j ON j.accountId = a.id " +
             "WHERE a.nature IN ('ASSET', 'LIABILITY', 'EQUITY') " +
-            "GROUP BY a.id, a.name, a.nature ORDER BY a.nature, a.code, a.name"
+            "GROUP BY a.id, a.name, a.nature " +
+            "UNION ALL " +
+            "SELECT -1 AS accountId, 'صافي الربح الجاري' AS accountName, 'EQUITY' AS nature, " +
+            "(SELECT COALESCE(SUM(CASE WHEN ar.nature = 'REVENUE' " +
+            "THEN jl.credit - jl.debit ELSE jl.credit - jl.debit END), 0) " +
+            "FROM journal_lines jl INNER JOIN accounts ar ON ar.id = jl.accountId " +
+            "WHERE ar.nature = 'REVENUE') - " +
+            "(SELECT COALESCE(SUM(jl.debit - jl.credit), 0) " +
+            "FROM journal_lines jl INNER JOIN accounts ae ON ae.id = jl.accountId " +
+            "WHERE ae.nature = 'EXPENSE') AS amount " +
+            "ORDER BY nature, accountName"
     )
     fun observeFinancialPosition(): Flow<List<FinancialReportRow>>
 
