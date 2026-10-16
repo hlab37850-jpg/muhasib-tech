@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">المحاسب تك</string>
     <string name="backup_database">نسخة احتياطية لقاعدة البيانات</string>
+    <string name="restore_database">استعادة نسخة احتياطية</string>
 
     <string name="sales">المبيعات</string>
     <string name="purchases">المشتريات</string>
