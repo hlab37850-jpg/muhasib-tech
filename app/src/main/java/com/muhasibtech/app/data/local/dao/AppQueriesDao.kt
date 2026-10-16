@@ -18,6 +18,21 @@ data class AccountBalance(
     val totalCredit: Double
 )
 
+data class TrialBalanceRow(
+    val accountId: Long,
+    val accountName: String,
+    val code: String,
+    val debit: Double,
+    val credit: Double
+)
+
+data class FinancialReportRow(
+    val accountId: Long,
+    val accountName: String,
+    val nature: String,
+    val amount: Double
+)
+
 @Dao
 interface AppQueriesDao {
 
@@ -61,6 +76,34 @@ interface AppQueriesDao {
             "ORDER BY d.date DESC, d.id DESC LIMIT 1"
     )
     suspend fun getLastSaleLine(itemId: Long): DocumentLineEntity?
+
+    @Query(
+        "SELECT a.id AS accountId, a.name AS accountName, a.code AS code, " +
+            "COALESCE(SUM(j.debit), 0) AS debit, COALESCE(SUM(j.credit), 0) AS credit " +
+            "FROM accounts a LEFT JOIN journal_lines j ON j.accountId = a.id " +
+            "GROUP BY a.id, a.name, a.code ORDER BY a.code, a.name"
+    )
+    suspend fun getTrialBalance(): List<TrialBalanceRow>
+
+    @Query(
+        "SELECT a.id AS accountId, a.name AS accountName, a.nature AS nature, " +
+            "CASE WHEN a.nature = 'REVENUE' THEN COALESCE(SUM(j.credit), 0) - COALESCE(SUM(j.debit), 0) " +
+            "ELSE COALESCE(SUM(j.debit), 0) - COALESCE(SUM(j.credit), 0) END AS amount " +
+            "FROM accounts a LEFT JOIN journal_lines j ON j.accountId = a.id " +
+            "WHERE a.nature IN ('REVENUE', 'EXPENSE') " +
+            "GROUP BY a.id, a.name, a.nature ORDER BY a.nature, a.code, a.name"
+    )
+    suspend fun getIncomeStatement(): List<FinancialReportRow>
+
+    @Query(
+        "SELECT a.id AS accountId, a.name AS accountName, a.nature AS nature, " +
+            "CASE WHEN a.nature = 'ASSET' THEN COALESCE(SUM(j.debit), 0) - COALESCE(SUM(j.credit), 0) " +
+            "ELSE COALESCE(SUM(j.credit), 0) - COALESCE(SUM(j.debit), 0) END AS amount " +
+            "FROM accounts a LEFT JOIN journal_lines j ON j.accountId = a.id " +
+            "WHERE a.nature IN ('ASSET', 'LIABILITY', 'EQUITY') " +
+            "GROUP BY a.id, a.name, a.nature ORDER BY a.nature, a.code, a.name"
+    )
+    suspend fun getFinancialPosition(): List<FinancialReportRow>
 
     @Query("SELECT accountId, SUM(debit) AS totalDebit, SUM(credit) AS totalCredit FROM journal_lines GROUP BY accountId")
     suspend fun getAccountBalances(): List<AccountBalance>
