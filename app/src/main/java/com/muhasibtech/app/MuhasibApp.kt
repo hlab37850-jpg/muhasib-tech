@@ -29,6 +29,7 @@ class MuhasibApp : Application() {
      * backup has replaced the on-disk database.
      */
     fun reloadDatabase() {
+        AppRepository.clearInstanceForDatabaseRestore()
         database = AppDatabase.getInstance(this)
         repository = AppRepository.getInstance(database)
         val currentDatabase = database
