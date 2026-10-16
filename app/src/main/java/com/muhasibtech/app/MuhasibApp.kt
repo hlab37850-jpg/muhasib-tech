@@ -21,12 +21,19 @@ class MuhasibApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        reloadDatabase()
+    }
 
+    /**
+     * Rebinds application-scoped database and repository objects after a validated
+     * backup has replaced the on-disk database.
+     */
+    fun reloadDatabase() {
         database = AppDatabase.getInstance(this)
         repository = AppRepository.getInstance(database)
-
+        val currentDatabase = database
         applicationScope.launch {
-            DefaultDataSeeder.seed(database)
+            DefaultDataSeeder.seed(currentDatabase)
         }
     }
 }
