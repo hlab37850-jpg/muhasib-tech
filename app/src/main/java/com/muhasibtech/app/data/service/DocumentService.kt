@@ -24,6 +24,25 @@ class DocumentService(
         if (request.lines.isEmpty()) {
             throw IllegalStateException("لا توجد بنود في المستند")
         }
+        if (!request.discountValue.isFinite() || request.discountValue < 0.0 ||
+            !request.taxRate.isFinite() || request.taxRate < 0.0 ||
+            !request.feesAmount.isFinite() || request.feesAmount < 0.0 ||
+            !request.paidAmount.isFinite() || request.paidAmount < 0.0 ||
+            !request.currencyRate.isFinite() || request.currencyRate <= 0.0
+        ) {
+            throw IllegalStateException("تحقق من الخصم والضريبة والرسوم والمبلغ المدفوع وسعر الصرف")
+        }
+        if (request.lines.any { line ->
+                !line.qty.isFinite() || !line.price.isFinite() || !line.total.isFinite() ||
+                    !line.debit.isFinite() || !line.credit.isFinite() ||
+                    line.price < 0.0 || line.debit < 0.0 || line.credit < 0.0
+            }
+        ) {
+            throw IllegalStateException("توجد كمية أو قيمة مالية غير صحيحة في أحد البنود")
+        }
+        if (request.discountType == DiscountType.PERCENT && request.discountValue > 100.0) {
+            throw IllegalStateException("لا يمكن أن تتجاوز نسبة الخصم 100٪")
+        }
 
         return db.withTransaction {
             val date = if (request.date.isBlank()) AppDate.today() else request.date
@@ -141,8 +160,13 @@ class DocumentService(
                 request.paidAmount
             }
 
-            val remainingAmount = if (request.docType == DocType.SALE_CREDIT || request.docType == DocType.PURCHASE_CREDIT) {
-                netAmount - paidAmount
+            val isCreditDocument = request.docType == DocType.SALE_CREDIT ||
+                request.docType == DocType.PURCHASE_CREDIT
+            if (isCreditDocument && (paidAmount < 0.0 || paidAmount - netAmount > 0.001)) {
+                throw IllegalStateException("المبلغ المدفوع لا يجوز أن يتجاوز صافي المستند")
+            }
+            val remainingAmount = if (isCreditDocument) {
+                (netAmount - paidAmount).coerceAtLeast(0.0)
             } else {
                 0.0
             }
@@ -593,13 +617,13 @@ class DocumentService(
                 val inventoryAccount = repo.settings.getLong(SettingKeys.ACCOUNT_INVENTORY_ID, 0L)
                 val customersAccount = repo.settings.getLong(SettingKeys.ACCOUNT_CUSTOMERS_ID, 0L)
 
-                val debitAccount = if (doc.docType == DocType.SALE_CASH) {
-                    cashAccountId
+                if (doc.docType == DocType.SALE_CASH) {
+                    add(cashAccountId, doc.netAmount, 0.0, "مبيعات نقدية")
                 } else {
-                    if (doc.partyAccountId > 0) doc.partyAccountId else customersAccount
+                    val customerAccount = if (doc.partyAccountId > 0) doc.partyAccountId else customersAccount
+                    add(customerAccount, doc.remainingAmount, 0.0, "رصيد مستحق على العميل")
+                    add(cashAccountId, doc.paidAmount, 0.0, "دفعة مقدمة على المبيعات")
                 }
-
-                add(debitAccount, doc.netAmount, 0.0, "صافي المستند")
                 add(discountAccount, doc.discountAmount, 0.0, "الخصم")
                 add(salesAccount, 0.0, doc.totalAmount, "المبيعات")
                 add(taxAccount, 0.0, doc.taxAmount, "الضريبة")
@@ -616,14 +640,14 @@ class DocumentService(
                 val inventoryAccount = repo.settings.getLong(SettingKeys.ACCOUNT_INVENTORY_ID, 0L)
                 val suppliersAccount = repo.settings.getLong(SettingKeys.ACCOUNT_SUPPLIERS_ID, 0L)
 
-                val creditAccount = if (doc.docType == DocType.PURCHASE_CASH) {
-                    cashAccountId
-                } else {
-                    if (doc.partyAccountId > 0) doc.partyAccountId else suppliersAccount
-                }
-
                 add(inventoryAccount, doc.netAmount, 0.0, "شراء مخزون")
-                add(creditAccount, 0.0, doc.netAmount, "سداد المشتريات")
+                if (doc.docType == DocType.PURCHASE_CASH) {
+                    add(cashAccountId, 0.0, doc.netAmount, "مشتريات نقدية")
+                } else {
+                    val supplierAccount = if (doc.partyAccountId > 0) doc.partyAccountId else suppliersAccount
+                    add(supplierAccount, 0.0, doc.remainingAmount, "رصيد مستحق للمورد")
+                    add(cashAccountId, 0.0, doc.paidAmount, "دفعة مقدمة للمورد")
+                }
             }
 
             DocType.RECEIPT -> {
