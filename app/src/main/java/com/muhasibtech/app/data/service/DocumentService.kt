@@ -32,6 +32,10 @@ class DocumentService(
             }
 
             val targetWarehouseId = request.targetWarehouseId
+            if (request.docType == DocType.STOCK_TRANSFER) {
+                StockTransferValidator.validate(warehouseId, targetWarehouseId)
+            }
+
             val currencyId = if (request.currencyId == 0L) {
                 repo.settings.getCurrentCurrencyId()
             } else {
