@@ -149,6 +149,12 @@ class DocumentService(
             ) {
                 throw IllegalStateException("المبلغ المدفوع نقدًا لا يجوز أن يتجاوز صافي المستند")
             }
+            if ((request.docType == DocType.SALE_CASH ||
+                    request.docType == DocType.PURCHASE_CASH) &&
+                kotlin.math.abs(paidAmount - netAmount) > 0.001
+            ) {
+                throw IllegalStateException("المستند النقدي يجب أن يُسدد بالكامل؛ استخدم نوع الآجل للدفعات الجزئية")
+            }
 
             val isCreditDocument = request.docType == DocType.SALE_CREDIT ||
                 request.docType == DocType.PURCHASE_CREDIT
