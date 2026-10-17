@@ -1,6 +1,7 @@
 package com.muhasibtech.app.data.service
 
 import com.muhasibtech.app.data.model.DiscountType
+import com.muhasibtech.app.data.model.DocType
 import com.muhasibtech.app.data.model.DocumentRequest
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -54,6 +55,64 @@ class DocumentRequestValidatorTest {
 
         val error = runCatching { DocumentRequestValidator.validate(request) }.exceptionOrNull()
         assertTrue(error is IllegalStateException)
+    }
+
+    @Test
+    fun rejectsUnknownDocumentType() {
+        val request = validRequest().copy(docType = "UNKNOWN_TYPE")
+
+        val error = runCatching { DocumentRequestValidator.validate(request) }.exceptionOrNull()
+
+        assertTrue(error is IllegalStateException)
+        assertTrue(error?.message?.contains("غير مدعوم") == true)
+    }
+
+    @Test
+    fun rejectsUnknownDiscountType() {
+        val request = validRequest().copy(discountType = "UNKNOWN_DISCOUNT")
+
+        val error = runCatching { DocumentRequestValidator.validate(request) }.exceptionOrNull()
+
+        assertTrue(error is IllegalStateException)
+        assertTrue(error?.message?.contains("نوع الخصم") == true)
+    }
+
+    @Test
+    fun rejectsJournalLineWithoutAccount() {
+        val request = validRequest().copy(
+            docType = DocType.JOURNAL_DAILY,
+            lines = listOf(DocumentRequest.Line(debit = 10.0, credit = 10.0))
+        )
+
+        val error = runCatching { DocumentRequestValidator.validate(request) }.exceptionOrNull()
+
+        assertTrue(error is IllegalStateException)
+        assertTrue(error?.message?.contains("حسابًا") == true)
+    }
+
+    @Test
+    fun rejectsJournalLineWithDebitAndCreditTogether() {
+        val request = validRequest().copy(
+            docType = DocType.JOURNAL_DAILY,
+            lines = listOf(DocumentRequest.Line(accountId = 1L, debit = 10.0, credit = 10.0))
+        )
+
+        val error = runCatching { DocumentRequestValidator.validate(request) }.exceptionOrNull()
+
+        assertTrue(error is IllegalStateException)
+    }
+
+    @Test
+    fun acceptsJournalLineWithSingleSideAndAccount() {
+        val request = validRequest().copy(
+            docType = DocType.JOURNAL_DAILY,
+            lines = listOf(
+                DocumentRequest.Line(accountId = 1L, debit = 10.0),
+                DocumentRequest.Line(accountId = 2L, credit = 10.0)
+            )
+        )
+
+        DocumentRequestValidator.validate(request)
     }
 
     @Test
