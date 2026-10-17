@@ -415,6 +415,9 @@ class DocumentService(
 
                     lines[i] = line.copy(cost = cost, previousQty = oldQty)
 
+                    if (delta < 0.0) {
+                        StockAvailabilityValidator.validate(oldQty, abs(delta))
+                    }
                     if (delta != 0.0) {
                         changeStock(line.itemId, warehouseId, delta, cost, delta > 0)
                         signedValue += delta * cost
