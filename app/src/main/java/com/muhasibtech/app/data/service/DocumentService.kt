@@ -285,6 +285,7 @@ class DocumentService(
 
                     val balance = repo.stockBalances.getOnce(line.itemId, warehouseId)
                     val oldQty = balance?.qty ?: 0.0
+                    StockAvailabilityValidator.validate(oldQty, abs(line.qty))
                     val cost = if ((balance?.averageCost ?: 0.0) > 0.0) {
                         balance!!.averageCost
                     } else {
@@ -313,6 +314,7 @@ class DocumentService(
 
                     val balance = repo.stockBalances.getOnce(line.itemId, warehouseId)
                     val oldQty = balance?.qty ?: 0.0
+                    StockAvailabilityValidator.validate(oldQty, abs(line.qty))
                     val cost = if ((balance?.averageCost ?: 0.0) > 0.0) {
                         balance!!.averageCost
                     } else {
@@ -341,6 +343,7 @@ class DocumentService(
 
                     val sourceBalance = repo.stockBalances.getOnce(line.itemId, warehouseId)
                     val oldQty = sourceBalance?.qty ?: 0.0
+                    StockAvailabilityValidator.validate(oldQty, abs(line.qty))
                     val cost = if ((sourceBalance?.averageCost ?: 0.0) > 0.0) {
                         sourceBalance!!.averageCost
                     } else {
@@ -383,6 +386,7 @@ class DocumentService(
                         AdjustmentType.DAMAGED, AdjustmentType.SHORTAGE -> {
                             val qty = abs(line.qty)
                             if (qty != 0.0) {
+                                StockAvailabilityValidator.validate(oldQty, qty)
                                 changeStock(line.itemId, warehouseId, -qty, cost, false)
                                 signedValue -= qty * cost
                             }
@@ -390,6 +394,9 @@ class DocumentService(
 
                         else -> {
                             val delta = line.qty
+                            if (delta < 0.0) {
+                                StockAvailabilityValidator.validate(oldQty, abs(delta))
+                            }
                             if (delta != 0.0) {
                                 changeStock(line.itemId, warehouseId, delta, cost, delta > 0)
                                 signedValue += delta * cost
