@@ -434,7 +434,9 @@ class DocumentService(
                         itemId = line.itemId,
                         warehouseId = document.warehouseId,
                         qty = abs(line.qty),
-                        purchasePrice = line.price
+                        // Reverse using the cost captured when this purchase was posted.
+                        // The entered price may differ when the purchase line used fallback cost.
+                        purchasePrice = if (line.cost > 0.0) line.cost else line.price
                     )
                 }
 
