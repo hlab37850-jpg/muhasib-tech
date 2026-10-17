@@ -704,6 +704,10 @@ class DocumentService(
         }
 
         if (journalLines.isNotEmpty()) {
+            JournalBalanceValidator.validate(
+                totalDebit = journalLines.sumOf { it.debit },
+                totalCredit = journalLines.sumOf { it.credit }
+            )
             repo.journalLines.insertAll(journalLines)
         }
     }
